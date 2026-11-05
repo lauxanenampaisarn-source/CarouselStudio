@@ -1,0 +1,1142 @@
+<!doctype html><html lang="th"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><link rel="manifest" href="manifest.webmanifest"><meta name="theme-color" content="#2346D6"><link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png"><link rel="apple-touch-icon" href="icons/apple-touch-icon.png"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="Carousel Studio"><meta name="description" content="AI เขียนและออกแบบคอนเทนต์ Carousel สำหรับโพสต์และแอด Facebook"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0;padding:0;font:14px system-ui,-apple-system,"Segoe UI",sans-serif}img{max-width:100%}[hidden]{display:none!important}</style></head><body><title>Carousel Studio</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Anuphan:wght@400;600;700&family=Bai+Jamjuree:wght@400;600;700&family=Chakra+Petch:wght@400;600;700&family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Thai:wght@400;600;700&family=Kanit:wght@400;600;700&family=Mitr:wght@400;600&family=Noto+Serif+Thai:wght@400;600;700&family=Prompt:wght@400;600;700&family=Sarabun:wght@400;600;700&family=Trirong:wght@400;600;700&display=swap">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+/* Layout: two-pane workbench. Left rail = brief + theme controls; right = swipeable slide strip, then ad/post copy and a feed preview. */
+:root{
+  --bg:#ECEEF1; --surface:#FFFFFF; --surface-2:#F5F6F8; --ink:#14171D; --muted:#5B6371; --line:#D7DBE1;
+  --accent:#2346D6; --accent-ink:#FFFFFF; --accent-soft:#E3E8FB;
+  --warn:#A9530B; --ok:#1B7646; --danger:#B32424;
+  --f-display:"Bai Jamjuree","IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans Thai",system-ui,sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,monospace;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#111318; --surface:#1A1D24; --surface-2:#22262E; --ink:#E7E9EE; --muted:#9AA2B0; --line:#2F343E;
+  --accent:#7F95FF; --accent-ink:#0F1220; --accent-soft:#252C4A;
+  --warn:#F0A35E; --ok:#5CC98D; --danger:#F07A7A; color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#111318; --surface:#1A1D24; --surface-2:#22262E; --ink:#E7E9EE; --muted:#9AA2B0; --line:#2F343E;
+  --accent:#7F95FF; --accent-ink:#0F1220; --accent-soft:#252C4A;
+  --warn:#F0A35E; --ok:#5CC98D; --danger:#F07A7A; color-scheme:dark;}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--f-body);font-size:14px;line-height:1.55;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 48px}
+h1,h2,h3{font-family:var(--f-display);text-wrap:balance;margin:0;line-height:1.2}
+.topbar{display:flex;flex-wrap:wrap;align-items:center;justify-content:space-between;gap:12px;padding-block:18px 14px;max-width:1500px;margin:0 auto}
+.brandmark{display:flex;align-items:baseline;gap:12px;flex-wrap:wrap}
+.brandmark h1{font-size:24px;font-weight:700;letter-spacing:-.01em}
+.brandmark p{margin:0;color:var(--muted)}
+.ai-pill{display:inline-flex;align-items:center;gap:8px;padding:6px 12px;border-radius:999px;background:var(--surface);border:1px solid var(--line);font-size:13px}
+.ai-pill i{width:8px;height:8px;border-radius:50%;background:var(--muted)}
+.ai-pill[data-s="on"] i{background:var(--ok)}
+.ai-pill[data-s="busy"] i{background:var(--accent);animation:pulse 1s infinite}
+.ai-pill[data-s="off"] i{background:var(--warn)}
+@keyframes pulse{50%{opacity:.3}}
+@media (prefers-reduced-motion:reduce){.ai-pill i{animation:none!important}}
+
+.app{display:grid;grid-template-columns:360px minmax(0,1fr);gap:20px;max-width:1500px;margin:0 auto;align-items:start}
+@media (max-width:960px){.app{grid-template-columns:minmax(0,1fr)}}
+.rail{display:flex;flex-direction:column;gap:16px;min-width:0}
+@media (min-width:961px){.rail{position:sticky;top:max(12px,env(safe-area-inset-top,0px));max-height:calc(100vh - 24px);overflow:auto;padding-right:4px}}
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:flex;flex-direction:column;gap:12px;min-width:0}
+.panel h2{font-size:16px;font-weight:700;display:flex;align-items:center;justify-content:space-between;gap:8px}
+.panel h2 small{font-family:var(--f-body);font-weight:400;color:var(--muted);font-size:12px}
+.eyebrow{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:600}
+label{display:flex;flex-direction:column;gap:4px;font-size:13px;color:var(--muted);min-width:0}
+label > span.lbl{display:flex;justify-content:space-between;gap:8px}
+input[type=text],input[type=url],textarea,select{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+textarea{resize:vertical;line-height:1.5}
+input:focus-visible,textarea:focus-visible,select:focus-visible,button:focus-visible,.file:focus-within{outline:2px solid var(--accent);outline-offset:1px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{font:inherit;font-weight:600;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:9px;padding:8px 14px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;gap:6px;white-space:nowrap}
+.btn:hover{border-color:var(--muted)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn-primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn-primary:hover{filter:brightness(1.07);border-color:var(--accent)}
+.btn-sm{padding:5px 10px;font-size:12.5px;border-radius:7px}
+.btn-ghost{background:transparent}
+.btn-block{width:100%;padding:11px 14px;font-size:15px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.hint{font-size:12px;color:var(--muted);margin:0}
+.cnt{font-family:var(--f-mono);font-size:11.5px;font-variant-numeric:tabular-nums}
+.cnt.over{color:var(--danger);font-weight:600}
+
+.seg{display:flex;background:var(--surface-2);border:1px solid var(--line);border-radius:9px;padding:3px;gap:3px}
+.seg button{flex:1;font:inherit;font-size:13px;border:0;background:transparent;color:var(--muted);padding:6px 8px;border-radius:6px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.themes{display:grid;grid-template-columns:repeat(auto-fill,minmax(96px,1fr));gap:8px}
+.tchip{font:inherit;border:1px solid var(--line);border-radius:10px;padding:0;background:var(--surface-2);cursor:pointer;overflow:hidden;text-align:left;color:var(--ink)}
+.tchip[aria-pressed="true"]{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
+.tchip .sw{height:42px;display:flex;align-items:flex-end;padding:6px;gap:4px}
+.tchip .sw b{width:14px;height:14px;border-radius:50%;border:1px solid rgba(0,0,0,.15)}
+.tchip .sw em{font-style:normal;font-weight:700;font-size:15px;margin-right:auto}
+.tchip span{display:block;font-size:11.5px;padding:5px 7px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.colors{display:grid;grid-template-columns:repeat(auto-fill,minmax(98px,1fr));gap:8px}
+.color{flex-direction:row;align-items:center;gap:6px;font-size:12px;background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:4px 6px}
+.color input{width:26px;height:26px;border:0;padding:0;background:none;cursor:pointer;flex:none}
+details.more summary{cursor:pointer;font-size:13px;color:var(--muted);font-weight:600}
+details.more[open] summary{margin-bottom:10px}
+
+.main{display:flex;flex-direction:column;gap:16px;min-width:0}
+.toolbar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;justify-content:space-between}
+.toolbar .refine{display:flex;gap:8px;flex:1 1 320px;min-width:0}
+.toolbar .refine input{flex:1}
+.notice{background:var(--accent-soft);border-radius:10px;padding:10px 14px;font-size:13px;display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap}
+.strip{display:flex;gap:14px;overflow-x:auto;padding-bottom:10px;scroll-snap-type:x proximity}
+.slide-card{flex:0 0 300px;background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:12px;display:flex;flex-direction:column;gap:9px;scroll-snap-align:start;min-width:0}
+.canvas-wrap{width:100%;border-radius:8px;overflow:hidden;background:var(--surface-2);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.canvas-wrap canvas{width:100%;height:100%;display:block}
+.slide-meta{display:flex;align-items:center;gap:6px}
+.slide-meta select{width:auto;flex:1;padding:5px 8px;font-size:12.5px}
+.slide-no{font-family:var(--f-mono);font-size:12px;color:var(--muted);white-space:nowrap}
+.icon-btn{font:inherit;width:30px;height:30px;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:7px;cursor:pointer;flex:none}
+.icon-btn:hover{border-color:var(--muted)}
+.icon-btn:disabled{opacity:.35;cursor:default}
+.file{position:relative;cursor:pointer}
+.file input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%}
+.ad-only{display:flex;flex-direction:column;gap:8px;border-top:1px dashed var(--line);padding-top:8px}
+.add-card{flex:0 0 140px;border:1.5px dashed var(--line);border-radius:14px;background:transparent;color:var(--muted);font:inherit;font-weight:600;cursor:pointer}
+.add-card:hover{border-color:var(--accent);color:var(--accent)}
+.hooks{display:flex;flex-wrap:wrap;gap:6px}
+.hooks button{font:inherit;font-size:12.5px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);border-radius:999px;padding:4px 10px;cursor:pointer;text-align:left}
+.hooks button:hover{border-color:var(--accent)}
+
+.outputs{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,.9fr);gap:16px}
+@media (max-width:1180px){.outputs{grid-template-columns:minmax(0,1fr)}}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line)}
+.tabs button{font:inherit;font-weight:600;border:0;background:none;color:var(--muted);padding:8px 12px;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px}
+.tabs button[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.tabpane{display:flex;flex-direction:column;gap:12px}
+
+.feed{background:var(--surface);border:1px solid var(--line);border-radius:14px;overflow:hidden;min-width:0}
+.feed-head{display:flex;gap:10px;align-items:center;padding:12px 14px}
+.feed-av{width:40px;height:40px;border-radius:50%;background:var(--accent);color:var(--accent-ink);display:grid;place-items:center;font-weight:700;overflow:hidden;flex:none}
+.feed-av img{width:100%;height:100%;object-fit:cover}
+.feed-name{font-weight:600;line-height:1.2}
+.feed-sub{font-size:12px;color:var(--muted)}
+.feed-text{padding:0 14px 10px;white-space:pre-wrap;word-break:break-word}
+.feed-cards{display:flex;gap:8px;overflow-x:auto;padding:0 14px 14px}
+.fcard{flex:0 0 220px;border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface-2)}
+.fcard canvas{width:100%;display:block}
+.fcard .fb{padding:8px 10px;display:flex;gap:8px;align-items:center;justify-content:space-between}
+.fcard .fb div{min-width:0}
+.fcard .fh{font-weight:600;font-size:13px;line-height:1.3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fcard .fd{font-size:12px;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.fcard .fcta{font-size:12px;font-weight:600;background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:4px 8px;white-space:nowrap}
+.tips{margin:0;padding-left:18px;color:var(--muted);font-size:12.5px;display:flex;flex-direction:column;gap:3px}
+
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:10px;font-size:13.5px;max-width:calc(100% - 32px);z-index:20;box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.toast.err{background:var(--danger);color:#fff}
+.busy-line{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted)}
+.thumbs{display:flex;gap:8px;flex-wrap:wrap}
+.thumb{position:relative;width:64px;height:64px;border-radius:8px;overflow:hidden;border:1px solid var(--line);background:var(--surface-2)}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb button{position:absolute;top:2px;right:2px;width:20px;height:20px;border-radius:50%;border:0;background:rgba(0,0,0,.6);color:#fff;font-size:11px;cursor:pointer;line-height:20px;padding:0}
+.palette{display:flex;gap:4px;flex-wrap:wrap}
+.palette span{width:26px;height:26px;border-radius:6px;border:1px solid rgba(0,0,0,.12)}
+.subhead{font-size:13px;font-weight:700;color:var(--ink);margin:0}
+.sep{border:0;border-top:1px solid var(--line);margin:2px 0}
+.overlay{position:fixed;inset:0;background:rgba(10,12,16,.55);z-index:30;display:grid;place-items:center;padding:max(16px,env(safe-area-inset-top,0px)) max(16px,env(safe-area-inset-right,0px)) max(16px,env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-left,0px))}
+.modal{background:var(--surface);color:var(--ink);border-radius:14px;max-width:720px;width:100%;max-height:100%;overflow:auto;padding:20px;display:flex;flex-direction:column;gap:12px;box-shadow:0 20px 60px rgba(0,0,0,.35)}
+.modal h3{font-size:18px}
+.modal ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:4px}
+.modal textarea{font-family:var(--f-mono);font-size:12px}
+.linkrow{display:flex;gap:8px;flex-wrap:wrap}
+.linkrow a{color:var(--accent);font-weight:600;text-decoration:none;border:1px solid var(--line);border-radius:8px;padding:6px 10px}
+.linkrow a:hover{border-color:var(--accent)}
+.keyrow{display:flex;gap:6px}
+.keyrow input{flex:1}
+input[type=password]{font:inherit;color:var(--ink);background:var(--surface-2);border:1px solid var(--line);border-radius:8px;padding:8px 10px;width:100%;min-width:0}
+.api-box{display:flex;flex-direction:column;gap:10px}
+.check{flex-direction:row;align-items:center;gap:6px;color:var(--ink)}
+</style>
+
+<header class="topbar">
+  <div class="brandmark">
+    <h1>Carousel Studio</h1>
+    <p>AI Agent เขียนและออกแบบคอนเทนต์ Carousel สำหรับโพสต์และแอด Facebook</p>
+  </div>
+  <div class="row">
+    <span class="ai-pill" id="ai-pill" data-s="wait"><i></i><span id="ai-pill-t">กำลังเชื่อมต่อ AI…</span></span>
+    <button class="btn btn-sm" id="stop-btn" hidden>หยุด</button>
+    <button class="btn btn-sm" id="get-app" hidden>ดาวน์โหลดโปรแกรม</button>
+    <button class="btn btn-sm btn-primary" id="install-app" hidden>ติดตั้งแอป</button>
+  </div>
+</header>
+
+<div class="app">
+  <aside class="rail">
+    <section class="panel" aria-labelledby="h-ai">
+      <h2 id="h-ai">การเชื่อมต่อ AI <small id="ai-where"></small></h2>
+      <label>ใช้ AI ตัวไหน
+        <select id="p-provider">
+          <option value="builtin">Claude ในหน้านี้ (ไม่ต้องใช้คีย์)</option>
+          <option value="claude">Claude API (Anthropic)</option>
+          <option value="openai">ChatGPT API (OpenAI)</option>
+          <option value="gemini">Gemini API (Google)</option>
+          <option value="manual">คัดลอกไปวางใน AI ตัวไหนก็ได้</option>
+        </select>
+      </label>
+      <div id="p-api" class="api-box" hidden>
+        <label>API key
+          <span class="keyrow"><input type="password" id="p-key" autocomplete="off" spellcheck="false" placeholder="วางคีย์ของคุณ"><button class="btn btn-sm" id="p-key-show" type="button">แสดง</button></span>
+        </label>
+        <label>โมเดล<input type="text" id="p-model" list="p-models" spellcheck="false"></label>
+        <datalist id="p-models"></datalist>
+        <label class="check"><input type="checkbox" id="p-remember"> จำคีย์ไว้ในเครื่องนี้</label>
+        <p class="hint" id="p-key-help"></p>
+      </div>
+      <p class="hint" id="p-note"></p>
+    </section>
+
+    <section class="panel" aria-labelledby="h-brief">
+      <h2 id="h-brief">1. บรีฟงาน <small>AI ใช้ข้อมูลนี้เขียน</small></h2>
+      <div class="grid2">
+        <label>ชื่อแบรนด์/เพจ<input type="text" id="b-brand"></label>
+        <label>ชื่อบัญชี/ลิงก์สั้น<input type="text" id="b-handle"></label>
+      </div>
+      <label>สินค้า/บริการ/หัวข้อ<textarea id="b-product" rows="2"></textarea></label>
+      <div class="grid2">
+        <label>เป้าหมาย
+          <select id="b-goal">
+            <option value="awareness">สร้างการรับรู้แบรนด์</option>
+            <option value="engagement">เพิ่มการมีส่วนร่วม</option>
+            <option value="traffic">พาคนเข้าเว็บไซต์</option>
+            <option value="leads">เก็บรายชื่อ/ลงทะเบียน</option>
+            <option value="messages">ทักแชท Messenger</option>
+            <option value="sales">ขายสินค้า</option>
+          </select>
+        </label>
+        <label>โทนเสียง
+          <select id="b-tone">
+            <option>เป็นกันเอง สนุก</option>
+            <option>มืออาชีพ น่าเชื่อถือ</option>
+            <option>หรูหรา พรีเมียม</option>
+            <option>อบอุ่น ใส่ใจ</option>
+            <option>ให้ความรู้ เชิงวิชาการ</option>
+            <option>เร้าใจ ขายตรง</option>
+          </select>
+        </label>
+      </div>
+      <label>กลุ่มเป้าหมาย<input type="text" id="b-audience"></label>
+      <label>ข้อมูลเพิ่มเติม (โปรโมชั่น ราคา จุดเด่น ข้อห้าม)<textarea id="b-extra" rows="3"></textarea></label>
+      <label>ตัวอย่างโพสต์เดิมของเพจ (ให้ AI เลียนแบบสำนวน)<textarea id="b-samples" rows="3" placeholder="วางแคปชันเก่า 2–3 โพสต์"></textarea></label>
+      <label>สไตล์และน้ำเสียงของเพจ<textarea id="b-voice" rows="2" placeholder="เช่น เรียกลูกค้าว่า ‘ทุกคน’ ลงท้าย ‘นะคะ’ ใช้คำสั้น ๆ"></textarea></label>
+      <div class="grid2">
+        <label>ใช้สำหรับ
+          <select id="b-mode">
+            <option value="both">โพสต์ + แอด</option>
+            <option value="post">โพสต์อย่างเดียว</option>
+            <option value="ad">แอดอย่างเดียว</option>
+          </select>
+        </label>
+        <label>ภาษา
+          <select id="b-lang">
+            <option value="th">ไทย</option>
+            <option value="en">English</option>
+            <option value="mix">ไทยผสมอังกฤษ</option>
+          </select>
+        </label>
+      </div>
+      <label><span class="lbl">จำนวนสไลด์ <b class="cnt" id="b-count-v">6</b></span><input type="range" id="b-count" min="3" max="10" step="1"></label>
+      <button class="btn btn-primary btn-block ai-need" id="gen-btn">สร้างคอนเทนต์ด้วย AI</button>
+    </section>
+
+    <section class="panel" aria-labelledby="h-theme">
+      <h2 id="h-theme">2. ธีม <small>คลิกเพื่อเปลี่ยนทันที</small></h2>
+      <p class="subhead">ออกแบบตามธีมของเพจ</p>
+      <p class="hint">อัปโหลดโลโก้ ภาพปก หรือภาพหน้าจอโพสต์เดิมของเพจ (สูงสุด 4 ภาพ) แล้วดึงสีออกมาสร้างธีม</p>
+      <div class="thumbs" id="pg-thumbs"></div>
+      <div class="row">
+        <label class="btn btn-sm file">เพิ่มภาพของเพจ<input type="file" id="pg-in" accept="image/png,image/jpeg,image/webp" multiple></label>
+        <input type="text" id="pg-hex" placeholder="สีแบรนด์ เช่น #0E8C8C, #F2B705" style="flex:1;min-width:150px">
+      </div>
+      <div class="palette" id="pg-palette"></div>
+      <div class="row">
+        <button class="btn btn-sm" id="pg-extract">สร้างธีมจากสีของเพจ</button>
+        <button class="btn btn-sm ai-need" id="pg-ai">ให้ AI วิเคราะห์สไตล์เพจ</button>
+      </div>
+      <hr class="sep">
+      <p class="subhead">ธีมสำเร็จรูป</p>
+      <div class="themes" id="themes"></div>
+      <div class="row">
+        <input type="text" id="t-mood" placeholder="อธิบายอารมณ์ เช่น ญี่ปุ่นมินิมอล โทนไม้" style="flex:1">
+        <button class="btn btn-sm ai-need" id="ai-theme-btn">ให้ AI ออกแบบธีม</button>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:6px">ขนาดภาพ</div>
+        <div class="seg" id="t-ratio">
+          <button data-v="1:1">1:1 (1080×1080)</button>
+          <button data-v="4:5">4:5 (1080×1350)</button>
+        </div>
+      </div>
+      <div>
+        <div class="eyebrow" style="margin-bottom:6px">เลย์เอาต์</div>
+        <div class="seg" id="t-layout">
+          <button data-v="bold">ตัวหนังสือใหญ่</button>
+          <button data-v="card">การ์ด</button>
+          <button data-v="band">แถบสี</button>
+        </div>
+      </div>
+      <details class="more" open>
+        <summary>ปรับสีและฟอนต์เอง</summary>
+        <div style="display:flex;flex-direction:column;gap:10px">
+          <div class="colors" id="t-colors"></div>
+          <div class="grid2">
+            <label>ฟอนต์พาดหัว<select id="t-head"></select></label>
+            <label>ฟอนต์เนื้อหา<select id="t-body"></select></label>
+          </div>
+          <label>ลวดลายพื้นหลัง
+            <select id="t-deco">
+              <option value="none">ไม่มี</option>
+              <option value="shapes">วงกลม</option>
+              <option value="dots">จุด</option>
+              <option value="grid">ตาราง</option>
+              <option value="lines">กรอบเส้น</option>
+            </select>
+          </label>
+          <div class="row">
+            <label class="btn btn-sm file">อัปโหลดโลโก้<input type="file" id="logo-in" accept="image/png,image/jpeg,image/webp,image/svg+xml"></label>
+            <button class="btn btn-sm btn-ghost" id="logo-rm" hidden>ลบโลโก้</button>
+            <button class="btn btn-sm btn-ghost" id="save-theme">บันทึกเป็นธีมของฉัน</button>
+          </div>
+        </div>
+      </details>
+    </section>
+  </aside>
+
+  <main class="main">
+    <div class="notice" id="sample-note">
+      <span>กำลังแสดง <b>ข้อมูลตัวอย่าง</b> (ร้านกาแฟสมมติ) แก้บรีฟด้านซ้ายแล้วกด “สร้างคอนเทนต์ด้วย AI”</span>
+      <button class="btn btn-sm" id="clear-sample">เริ่มจากหน้าว่าง</button>
+    </div>
+    <div class="toolbar">
+      <div class="refine">
+        <input type="text" id="refine-in" placeholder="สั่ง AI ปรับทั้งชุด เช่น “สั้นลง เน้นโปรลด 20%”">
+        <button class="btn ai-need" id="refine-btn">ปรับด้วย AI</button>
+      </div>
+      <div class="row">
+        <button class="btn" id="zip-btn">ดาวน์โหลดภาพทั้งหมด (.zip)</button>
+      </div>
+    </div>
+    <div class="busy-line" id="busy" hidden><span id="busy-t">กำลังคิด…</span></div>
+    <div class="strip" id="strip"></div>
+    <div id="hooks-wrap" class="panel" hidden>
+      <h2>พาดหัวปกทางเลือก <small>คลิกเพื่อใช้กับสไลด์แรก ใช้ทำ A/B test ได้</small></h2>
+      <div class="hooks" id="hooks"></div>
+    </div>
+
+    <div class="outputs">
+      <section class="panel">
+        <div class="tabs" role="tablist">
+          <button role="tab" id="tab-ad" aria-selected="true" data-pane="pane-ad">ข้อความแอด</button>
+          <button role="tab" id="tab-post" aria-selected="false" data-pane="pane-post">แคปชันโพสต์</button>
+        </div>
+        <div class="tabpane" id="pane-ad">
+          <label><span class="lbl">ข้อความหลัก (Primary text) <span class="cnt" data-c="a-primary" data-max="125"></span></span><textarea id="a-primary" rows="4"></textarea></label>
+          <div class="grid2">
+            <label><span class="lbl">พาดหัว (Headline) <span class="cnt" data-c="a-headline" data-max="40"></span></span><input type="text" id="a-headline"></label>
+            <label><span class="lbl">คำอธิบาย <span class="cnt" data-c="a-desc" data-max="30"></span></span><input type="text" id="a-desc"></label>
+          </div>
+          <div class="grid2">
+            <label>ปุ่ม CTA<select id="a-cta"></select></label>
+            <label>ลิงก์ปลายทาง<input type="url" id="a-link" placeholder="https://"></label>
+          </div>
+          <div class="row"><button class="btn btn-sm" id="copy-ad">คัดลอกข้อความแอด</button></div>
+          <ul class="tips">
+            <li>Carousel ads ใช้ได้ 2–10 การ์ด ขนาดแนะนำ 1080×1080</li>
+            <li>ข้อความหลักควรไม่เกิน 125 ตัวอักษร ส่วนที่เกินจะถูกซ่อนหลัง “ดูเพิ่มเติม”</li>
+            <li>พาดหัวต่อการ์ดตั้งได้ในช่องใต้สไลด์แต่ละใบ</li>
+          </ul>
+        </div>
+        <div class="tabpane" id="pane-post" hidden>
+          <label>แคปชัน<textarea id="p-caption" rows="7"></textarea></label>
+          <label>แฮชแท็ก<input type="text" id="p-tags"></label>
+          <div class="row"><button class="btn btn-sm" id="copy-post">คัดลอกแคปชัน + แฮชแท็ก</button></div>
+        </div>
+      </section>
+      <section>
+        <div class="eyebrow" style="margin-bottom:8px">ตัวอย่างเมื่อแสดงในฟีด</div>
+        <div class="feed">
+          <div class="feed-head">
+            <div class="feed-av" id="f-av"></div>
+            <div><div class="feed-name" id="f-name"></div><div class="feed-sub" id="f-sub">ได้รับการสนับสนุน</div></div>
+          </div>
+          <div class="feed-text" id="f-text"></div>
+          <div class="feed-cards" id="f-cards"></div>
+        </div>
+      </section>
+    </div>
+  </main>
+</div>
+<div class="overlay" id="manual" hidden>
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-title">
+    <h3 id="m-title">ส่งงานให้ AI ตัวที่คุณใช้อยู่</h3>
+    <ol>
+      <li>กด “คัดลอกคำสั่ง” แล้วเปิด AI ที่ต้องการ</li>
+      <li id="m-img-step" hidden>แนบภาพของเพจ <b id="m-img-n"></b> ภาพไปด้วย (ลากไฟล์เดิมที่อัปโหลดไว้ใส่ช่องแชท)</li>
+      <li>วางคำสั่งในช่องแชทแล้วส่ง</li>
+      <li>คัดลอกคำตอบทั้งหมดของ AI มาวางในช่องด้านล่าง แล้วกด “นำเข้าคำตอบ”</li>
+    </ol>
+    <div class="linkrow">
+      <a href="https://chatgpt.com/" target="_blank" rel="noopener">ChatGPT</a>
+      <a href="https://gemini.google.com/app" target="_blank" rel="noopener">Gemini</a>
+      <a href="https://claude.ai/new" target="_blank" rel="noopener">Claude</a>
+    </div>
+    <label>คำสั่งสำหรับ AI<textarea id="m-prompt" rows="6" readonly></textarea></label>
+    <div class="row"><button class="btn btn-primary" id="m-copy">คัดลอกคำสั่ง</button></div>
+    <label>วางคำตอบของ AI ที่นี่<textarea id="m-answer" rows="6" placeholder='{"slides": [ ... ] }'></textarea></label>
+    <div class="row" style="justify-content:flex-end">
+      <button class="btn" id="m-cancel">ยกเลิก</button>
+      <button class="btn btn-primary" id="m-import">นำเข้าคำตอบ</button>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+const $ = s => document.querySelector(s);
+const FONTS = ['Prompt','Kanit','Mitr','Sarabun','Anuphan','IBM Plex Sans Thai','Bai Jamjuree','Chakra Petch','Noto Serif Thai','Trirong'];
+const CTAS = [['LEARN_MORE','ดูข้อมูลเพิ่มเติม'],['SHOP_NOW','ซื้อเลย'],['ORDER_NOW','สั่งซื้อเลย'],['SIGN_UP','ลงทะเบียน'],['BOOK_NOW','จองเลย'],['SEND_MESSAGE','ส่งข้อความ'],['CONTACT_US','ติดต่อเรา'],['APPLY_NOW','สมัครเลย'],['GET_OFFER','รับข้อเสนอ'],['DOWNLOAD','ดาวน์โหลด']];
+const COLOR_KEYS = [['bg','พื้นหลัง'],['bg2','ไล่สี'],['ink','ตัวอักษร'],['muted','ตัวรอง'],['accent','สีเน้น'],['onAccent','บนสีเน้น'],['surface','การ์ด'],['chrome','หัว/ท้าย']];
+const THEMES = [
+  {id:'clean',name:'มินิมอลคลีน',bg:'#FFFFFF',bg2:'#FFFFFF',ink:'#1B2433',muted:'#5B6575',accent:'#FF5A4E',onAccent:'#FFFFFF',surface:'#F2F4F7',head:'IBM Plex Sans Thai',body:'IBM Plex Sans Thai',layout:'bold',deco:'none'},
+  {id:'pastel',name:'พาสเทลละมุน',bg:'#FBE8EE',bg2:'#E7E2FA',ink:'#3B2A4A',muted:'#6E5C7E',accent:'#B0529A',onAccent:'#FFFFFF',surface:'#FFFFFF',head:'Mitr',body:'Anuphan',layout:'card',deco:'shapes'},
+  {id:'lux',name:'ดาร์กพรีเมียม',bg:'#15161A',bg2:'#24252C',ink:'#F4EFE6',muted:'#B9B1A3',accent:'#D4A955',onAccent:'#15161A',surface:'#1F2026',head:'Noto Serif Thai',body:'Sarabun',layout:'bold',deco:'lines'},
+  {id:'pop',name:'สดใสป๊อป',bg:'#FFD83D',bg2:'#FFD83D',ink:'#111111',muted:'#3A3A3A',accent:'#E5177E',onAccent:'#FFFFFF',surface:'#FFFFFF',head:'Kanit',body:'Prompt',layout:'band',deco:'dots'},
+  {id:'organic',name:'ธรรมชาติ',bg:'#EEF0E5',bg2:'#DCE3CD',ink:'#2F3A2A',muted:'#5E6B55',accent:'#5E7F4F',onAccent:'#FFFFFF',surface:'#FAFBF5',head:'Trirong',body:'Sarabun',layout:'card',deco:'shapes'},
+  {id:'tech',name:'เทคโมเดิร์น',bg:'#0B1B3A',bg2:'#143474',ink:'#EAF2FF',muted:'#A9BCDD',accent:'#35D0E0',onAccent:'#0B1B3A',surface:'#13285A',head:'Chakra Petch',body:'IBM Plex Sans Thai',layout:'band',deco:'grid'},
+  {id:'clinic',name:'สุขภาพ/วิชาการ',bg:'#F4FAFA',bg2:'#E1F0F0',ink:'#12343B',muted:'#4D6B70',accent:'#0E8C8C',onAccent:'#FFFFFF',surface:'#FFFFFF',head:'Bai Jamjuree',body:'Sarabun',layout:'card',deco:'dots'},
+];
+const uid = () => Math.random().toString(36).slice(2,10);
+const SAMPLE = {
+  isSample:true, ratio:'1:1', themeId:'organic', theme:{...THEMES[4]},
+  brief:{brand:'บ้านดริป',handle:'@baandrip.hatyai',product:'ร้านกาแฟสโลว์บาร์ในหาดใหญ่ เปิดเวิร์กช็อปสอนดริปกาแฟสำหรับมือใหม่ทุกวันเสาร์',goal:'leads',tone:'เป็นกันเอง สนุก',audience:'วัยทำงานและนักศึกษา 22–35 ปี ในหาดใหญ่ ที่ชอบกาแฟและอยากชงเองที่บ้าน',extra:'เวิร์กช็อป 1 ชั่วโมง 590 บาท รับ 6 คนต่อรอบ ได้เมล็ดกาแฟ 100 กรัมกลับบ้าน',samples:'',voice:'เป็นกันเองแบบพี่บาริสตาเล่าให้ฟัง ประโยคสั้น ใช้ศัพท์กาแฟปนอังกฤษได้',mode:'both',lang:'th',count:6},
+  slides:[
+    {type:'cover',kicker:'มือใหม่หัดดริป',headline:'ดริปกาแฟที่บ้านให้อร่อย *เหมือนร้าน* ใน 4 ขั้นตอน',body:'เซฟเก็บไว้ ทำตามได้ทุกเช้า',cardHeadline:'ดริปให้อร่อยเหมือนร้าน',cardDesc:'4 ขั้นตอนง่าย ๆ'},
+    {type:'content',kicker:'ขั้นที่ 1',headline:'บดเมล็ด *สดก่อนชง* ทุกครั้ง',body:'บดหยาบประมาณเม็ดน้ำตาลทราย กลิ่นหอมจะอยู่ครบ ไม่หายไปกับอากาศ',cardHeadline:'บดสดก่อนชง',cardDesc:'กลิ่นหอมอยู่ครบ'},
+    {type:'content',kicker:'ขั้นที่ 2',headline:'อัตราส่วน *1:15* คือจุดเริ่มต้น',body:'กาแฟ 15 กรัม ต่อน้ำ 225 มล. แล้วค่อยปรับให้เข้มหรืออ่อนตามชอบ',cardHeadline:'สูตร 1:15',cardDesc:'กาแฟ 15 ก. น้ำ 225 มล.'},
+    {type:'content',kicker:'ขั้นที่ 3',headline:'น้ำร้อน *90–94°C* ไม่ใช่น้ำเดือด',body:'น้ำเดือดดึงความขมออกมาเร็วเกินไป พักกาน้ำไว้ 30 วินาทีหลังเดือด',cardHeadline:'น้ำ 90–94°C',cardDesc:'ไม่ขม ไม่เปรี้ยวเกิน'},
+    {type:'content',kicker:'ขั้นที่ 4',headline:'Bloom *30 วินาที* ก่อนรินต่อ',body:'รินน้ำ 2 เท่าของน้ำหนักกาแฟ รอให้แก๊สออก รสชาติจะสะอาดขึ้นชัดเจน',cardHeadline:'Bloom 30 วินาที',cardDesc:'รสชาติสะอาดขึ้น'},
+    {type:'cta',kicker:'เวิร์กช็อปทุกวันเสาร์',headline:'อยากดริปเป็นใน *1 ชั่วโมง*?',body:'คลาสเล็ก 6 คน 590 บาท พร้อมเมล็ดกาแฟ 100 กรัมกลับบ้าน',cardHeadline:'เวิร์กช็อป 590 บาท',cardDesc:'รับ 6 คนต่อรอบ'},
+  ].map(s=>({id:uid(),...s})),
+  caption:'ชงกาแฟเองที่บ้านแล้วไม่หอมเหมือนที่ร้าน? ลองเช็ก 4 จุดนี้ก่อน ☕\n\nเลื่อนดูให้ครบ แล้วเซฟเก็บไว้ทำตามพรุ่งนี้เช้า\n\nใครอยากลองมือจริงกับบาริสตา เวิร์กช็อปดริปกาแฟสำหรับมือใหม่ทุกวันเสาร์ คลาสละ 6 คน ทักแชทจองได้เลย',
+  hashtags:'#ดริปกาแฟ #กาแฟหาดใหญ่ #สโลว์บาร์ #เวิร์กช็อปกาแฟ #มือใหม่หัดดริป #บ้านดริป',
+  ad:{primary:'ดริปกาแฟเองให้หอมเหมือนร้าน เรียนจบใน 1 ชั่วโมง คลาสเล็ก 6 คน ได้เมล็ดกาแฟกลับบ้าน',headline:'เวิร์กช็อปดริปกาแฟ 590 บาท',desc:'ทุกวันเสาร์ หาดใหญ่',cta:'SEND_MESSAGE',link:''},
+  hooks:['ชงเองแล้วไม่หอม? เช็ก *4 จุด* นี้','ไม่ต้องมีเครื่องแพง ก็ดริปอร่อย *ได้ที่บ้าน*','*90°C* ตัวเลขเดียวที่เปลี่ยนรสกาแฟ']
+};
+const BLANK_SLIDES = () => [
+  {type:'cover',kicker:'หัวข้อเล็ก',headline:'พาดหัวที่ทำให้ *หยุดเลื่อน*',body:'คำโปรยสั้น ๆ',cardHeadline:'',cardDesc:''},
+  {type:'content',kicker:'ข้อ 1',headline:'ประเด็นสำคัญข้อแรก',body:'อธิบายสั้น ๆ 1–2 บรรทัด',cardHeadline:'',cardDesc:''},
+  {type:'content',kicker:'ข้อ 2',headline:'ประเด็นสำคัญข้อสอง',body:'อธิบายสั้น ๆ 1–2 บรรทัด',cardHeadline:'',cardDesc:''},
+  {type:'cta',kicker:'สนใจไหม',headline:'บอกสิ่งที่อยากให้ทำ *ตอนนี้*',body:'รายละเอียดข้อเสนอ',cardHeadline:'',cardDesc:''},
+].map(s=>({id:uid(),...s}));
+
+const STORE='carousel-studio-v1';
+let state = loadState() || structuredClone(SAMPLE);
+let images = {};   // slide id -> HTMLImageElement (not persisted)
+let logoImg = null;
+let sample = null, downloads = null, aiReady = false, busy = false, ctl = null;
+
+function loadState(){ try{ const r=localStorage.getItem(STORE); if(!r) return null; const s=JSON.parse(r); if(!Array.isArray(s.slides)||!s.theme) return null; return s; }catch(e){ return null } }
+let saveT;
+function save(){ clearTimeout(saveT); saveT=setTimeout(()=>{ try{ localStorage.setItem(STORE, JSON.stringify(state)) }catch(e){} },400) }
+function customThemes(){ try{ return JSON.parse(localStorage.getItem(STORE+'-themes')||'[]') }catch(e){ return [] } }
+
+/* ---------- text helpers ---------- */
+const seg = (typeof Intl!=='undefined' && Intl.Segmenter) ? new Intl.Segmenter('th',{granularity:'word'}) : null;
+const graph = (typeof Intl!=='undefined' && Intl.Segmenter) ? new Intl.Segmenter('th',{granularity:'grapheme'}) : null;
+function words(t){ return seg ? [...seg.segment(t)].map(x=>x.segment) : t.split(/(\s+)/).filter(Boolean) }
+function chars(t){ return graph ? [...graph.segment(t)].map(x=>x.segment) : [...t] }
+const len = t => (t||'').length ? chars(t||'').length : 0;
+// *text* marks accent words. Returns tokens {t, hl, nl}
+function tokenize(text, rich){
+  const out=[]; const paras=String(text||'').split('\n');
+  paras.forEach((p,pi)=>{
+    if(pi>0) out.push({nl:true});
+    const runs = rich ? p.split(/(\*[^*]+\*)/) : [p];
+    for(const r of runs){ if(!r) continue;
+      const hl = rich && /^\*[^*]+\*$/.test(r); const txt = hl ? r.slice(1,-1) : r;
+      for(const w of words(txt)) out.push({t:w,hl});
+    }
+  });
+  return out;
+}
+function wrapTokens(c, toks, maxW){
+  const lines=[[]]; let w=0;
+  const push = tk => { lines[lines.length-1].push(tk); w += c.measureText(tk.t).width };
+  for(const tk of toks){
+    if(tk.nl){ lines.push([]); w=0; continue }
+    const tw=c.measureText(tk.t).width;
+    if(w+tw>maxW && lines[lines.length-1].length && tk.t.trim()){ lines.push([]); w=0 }
+    if(!lines[lines.length-1].length && !tk.t.trim()) continue;
+    if(tw>maxW){ for(const ch of chars(tk.t)){ const cw=c.measureText(ch).width; if(w+cw>maxW && lines[lines.length-1].length){ lines.push([]); w=0 } push({t:ch,hl:tk.hl}) } }
+    else push(tk);
+  }
+  return lines.filter((l,i)=>l.length||i===0);
+}
+function fit(c, text, rich, family, weight, start, min, maxLines, maxW){
+  const toks=tokenize(text,rich); let size=start, lines;
+  while(true){ c.font=`${weight} ${size}px "${family}", sans-serif`; lines=wrapTokens(c,toks,maxW); if(lines.length<=maxLines||size<=min) break; size-=2 }
+  return {size,lines,family,weight};
+}
+const pad = n => String(n).padStart(2,'0');
+function rgba(hex,a){ const h=hex.replace('#',''); const n=parseInt(h.length===3?h.split('').map(x=>x+x).join(''):h,16); return `rgba(${n>>16&255},${n>>8&255},${n&255},${a})` }
+function rr(c,x,y,w,h,r){ c.beginPath(); c.moveTo(x+r,y); c.arcTo(x+w,y,x+w,y+h,r); c.arcTo(x+w,y+h,x,y+h,r); c.arcTo(x,y+h,x,y,r); c.arcTo(x,y,x+w,y,r); c.closePath() }
+function drawCover(c,img,x,y,w,h){ const s=Math.max(w/img.width,h/img.height); const iw=img.width*s, ih=img.height*s; c.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih) }
+function drawContain(c,img,x,y,w,h){ const s=Math.min(w/img.width,h/img.height); const iw=img.width*s, ih=img.height*s; c.drawImage(img,x+(w-iw)/2,y+(h-ih)/2,iw,ih) }
+const ctaLabel = code => (CTAS.find(x=>x[0]===code)||CTAS[0])[1];
+
+/* ---------- slide renderer (1080 wide) ---------- */
+function dims(){ return {W:1080,H:state.ratio==='4:5'?1350:1080} }
+function drawDeco(c,T,W,H,i){
+  c.save();
+  if(T.deco==='shapes'){
+    c.fillStyle=rgba(T.accent,.13); c.beginPath(); c.arc(i%2? W*0.92:W*0.86, i%2? H*0.9:H*0.1, W*0.3,0,Math.PI*2); c.fill();
+    c.fillStyle=rgba(T.accent,.2); c.beginPath(); c.arc(i%2? W*0.08:W*0.12, i%2? H*0.14:H*0.88, W*0.07,0,Math.PI*2); c.fill();
+  } else if(T.deco==='dots'){
+    c.fillStyle=rgba(T.accent,.4);
+    for(let r=0;r<5;r++) for(let k=0;k<7;k++){ c.beginPath(); c.arc(W-90-k*34, H*0.5-60+r*34, 5,0,Math.PI*2); c.fill() }
+  } else if(T.deco==='grid'){
+    c.strokeStyle=rgba(T.ink,.06); c.lineWidth=2;
+    for(let x=60;x<W;x+=60){ c.beginPath(); c.moveTo(x,0); c.lineTo(x,H); c.stroke() }
+    for(let y=60;y<H;y+=60){ c.beginPath(); c.moveTo(0,y); c.lineTo(W,y); c.stroke() }
+  } else if(T.deco==='lines'){
+    c.strokeStyle=rgba(T.accent,.55); c.lineWidth=3; c.strokeRect(36,36,W-72,H-72);
+  }
+  c.restore();
+}
+function drawSlide(cv, s, i, n){
+  const T=state.theme, {W,H}=dims(); cv.width=W; cv.height=H;
+  const c=cv.getContext('2d'); c.textBaseline='middle'; c.textAlign='left';
+  if(T.bg2 && T.bg2.toLowerCase()!==T.bg.toLowerCase()){ const g=c.createLinearGradient(0,0,W,H); g.addColorStop(0,T.bg); g.addColorStop(1,T.bg2); c.fillStyle=g } else c.fillStyle=T.bg;
+  c.fillRect(0,0,W,H);
+  drawDeco(c,T,W,H,i);
+  const P=88, band=T.layout==='band', card=T.layout==='card';
+  const isCover=s.type==='cover', isCta=s.type==='cta', isContent=s.type==='content';
+  const contentNo = state.slides.slice(0,i+1).filter(x=>x.type==='content').length;
+  let bandH=0;
+  if(band){ bandH = isCover ? Math.round(H*0.34) : 300; c.fillStyle=T.accent; c.fillRect(0,0,W,bandH) }
+  // header
+  const hc = band ? T.onAccent : (T.chrome||T.ink);
+  let hx=P;
+  if(logoImg){ drawContain(c,logoImg,P,P-36,72,72); hx=P+90 }
+  c.fillStyle=hc; c.font=`600 30px "${T.body}", sans-serif`; c.fillText(state.brief.brand||'',hx,P-12);
+  c.globalAlpha=.75; c.font=`400 24px "${T.body}", sans-serif`; c.fillText(state.brief.handle||'',hx,P+22); c.globalAlpha=1;
+  c.textAlign='right'; c.font=`500 26px "IBM Plex Mono", monospace`; c.fillText(`${pad(i+1)} / ${pad(n)}`,W-P,P-12); c.textAlign='left';
+  // band contents: kicker + step number
+  if(band){
+    c.fillStyle=T.onAccent;
+    if(isContent){ c.font=`700 120px "${T.head}", sans-serif`; c.globalAlpha=.9; c.fillText(pad(contentNo),P,bandH-120); c.globalAlpha=1 }
+    if(s.kicker){ c.font=`600 34px "${T.body}", sans-serif`; c.fillText(s.kicker, isContent? P+190:P, isContent? bandH-112 : bandH-60) }
+  }
+  // footer
+  const fy=H-P+6, bw=Math.max(14,Math.min(44,(W*0.38)/n-8));
+  const chrome=T.chrome||T.ink;
+  for(let k=0;k<n;k++){ c.fillStyle = k===i ? (T.chrome||T.accent) : rgba(chrome,.2); rr(c,P+k*(bw+8),fy-4,bw,8,4); c.fill() }
+  c.textAlign='right'; c.fillStyle=T.chrome? rgba(T.chrome,.85) : T.muted; c.font=`400 26px "${T.body}", sans-serif`;
+  if(i<n-1) c.fillText('เลื่อนดูต่อ  →',W-P,fy); else if(state.ad.link) c.fillText(state.ad.link.replace(/^https?:\/\//,'').slice(0,40),W-P,fy);
+  c.textAlign='left';
+  // content region
+  let top = band ? bandH+70 : P+110, bottom = fy-70, left=P, right=W-P;
+  if(card){
+    const cx=56, cy=P+80, ch=(fy-50)-cy;
+    c.save(); c.shadowColor='rgba(0,0,0,.14)'; c.shadowBlur=40; c.shadowOffsetY=12; c.fillStyle=T.surface; rr(c,cx,cy,W-2*cx,ch,40); c.fill(); c.restore();
+    left=cx+64; right=W-cx-64; top=cy+64; bottom=cy+ch-64;
+  }
+  const img=images[s.id];
+  if(img){ const ih=Math.round((bottom-top)*(isCover?0.5:0.44)); c.save(); rr(c,left,top,right-left,ih,26); c.clip(); drawCover(c,img,left,top,right-left,ih); c.restore(); top+=ih+44 }
+  const maxW=right-left, avail=bottom-top;
+  const ink = T.ink;
+  let scale=1, blocks;
+  for(let tries=0;tries<10;tries++){
+    blocks=[];
+    if(!band && s.kicker){ c.font=`600 ${Math.round(32*Math.max(scale,.8))}px "${T.body}", sans-serif`; blocks.push({kind:'kicker',...fit(c,s.kicker,false,T.body,600,Math.round(32*Math.max(scale,.8)),24,2,maxW),lh:1.35,color:T.accent,gap:22}) }
+    if(!band && isContent && T.layout==='bold'){ blocks.push({kind:'num',size:Math.round(110*scale),lines:[[{t:pad(contentNo)}]],family:T.head,weight:700,lh:1.05,color:T.accent,gap:14}) }
+    const hs = isCover? (img?84:112) : isCta? 92 : (img?68:82);
+    if(s.headline) blocks.push({kind:'head',...fit(c,s.headline,true,T.head,T.head==='Mitr'?600:700,Math.round(hs*scale),40,isCover?5:4,maxW),lh:1.32,color:ink,gap:28});
+    if(s.body) blocks.push({kind:'body',...fit(c,s.body,false,T.body,400,Math.round(40*scale),26,img?4:7,maxW),lh:1.55,color:T.muted,gap:isCta?40:0});
+    if(isCta) blocks.push({kind:'btn',h:Math.round(100*Math.max(scale,.75)),gap:0});
+    const total = blocks.reduce((a,b)=>a+(b.kind==='btn'?b.h:b.lines.length*b.size*b.lh)+b.gap,0);
+    blocks.total=total;
+    if(total<=avail) break; scale-=0.08;
+  }
+  let y = top + Math.max(0,(avail-blocks.total)*(isContent?0.3:0.5));
+  for(const b of blocks){
+    if(b.kind==='btn'){
+      const label=ctaLabel(state.ad.cta); c.font=`600 ${Math.round(b.h*0.38)}px "${T.body}", sans-serif`;
+      const bw2=c.measureText(label).width+b.h*1.2; c.fillStyle=T.accent; rr(c,left,y,bw2,b.h,b.h/2); c.fill();
+      c.fillStyle=T.onAccent; c.fillText(label,left+b.h*0.6,y+b.h/2+2); y+=b.h; continue;
+    }
+    c.font=`${b.weight} ${b.size}px "${b.family}", sans-serif`;
+    if(b.kind==='kicker' && 'letterSpacing' in c) c.letterSpacing='1px';
+    const lh=b.size*b.lh;
+    for(const line of b.lines){
+      let x=left;
+      for(const tk of line){
+        if(tk.hl){
+          const tw=c.measureText(tk.t).width;
+          if(T.layout==='band'||T.layout==='card'){ c.fillStyle=rgba(T.accent,.22); c.fillRect(x-2,y+lh*0.56,tw+4,lh*0.3) }
+          c.fillStyle=T.accent;
+        } else c.fillStyle=b.color;
+        c.fillText(tk.t,x,y+lh/2); x+=c.measureText(tk.t).width;
+      }
+      y+=lh;
+    }
+    if('letterSpacing' in c) c.letterSpacing='0px';
+    y+=b.gap;
+  }
+}
+
+/* ---------- fonts ---------- */
+async function ensureFonts(){
+  const T=state.theme;
+  try{ await Promise.all([
+    document.fonts.load(`700 60px "${T.head}"`,'กขค Aa'), document.fonts.load(`600 60px "${T.head}"`,'กขค Aa'),
+    document.fonts.load(`400 40px "${T.body}"`,'กขค Aa'), document.fonts.load(`600 30px "${T.body}"`,'กขค Aa'),
+    document.fonts.load('500 26px "IBM Plex Mono"','0123')]) }catch(e){}
+}
+
+/* ---------- strip ---------- */
+const strip=$('#strip');
+function buildStrip(){
+  strip.innerHTML='';
+  const n=state.slides.length, {W,H}=dims(), adOn=state.brief.mode!=='post';
+  state.slides.forEach((s,i)=>{
+    const el=document.createElement('article'); el.className='slide-card'; el.dataset.i=i;
+    el.innerHTML=`
+      <div class="canvas-wrap" style="aspect-ratio:${W}/${H}"><canvas></canvas></div>
+      <div class="slide-meta">
+        <span class="slide-no">${pad(i+1)}</span>
+        <select data-f="type" id="s-${s.id}-type" aria-label="ประเภทสไลด์"><option value="cover">หน้าปก</option><option value="content">เนื้อหา</option><option value="cta">ปิดท้าย / CTA</option></select>
+        <button class="icon-btn" data-act="left" title="ย้ายไปซ้าย" aria-label="ย้ายไปซ้าย" ${i===0?'disabled':''}>←</button>
+        <button class="icon-btn" data-act="right" title="ย้ายไปขวา" aria-label="ย้ายไปขวา" ${i===n-1?'disabled':''}>→</button>
+        <button class="icon-btn" data-act="del" title="ลบสไลด์" aria-label="ลบสไลด์" ${n<=2?'disabled':''}>✕</button>
+      </div>
+      <label>หัวข้อเล็ก<input type="text" data-f="kicker" id="s-${s.id}-kicker"></label>
+      <label><span class="lbl">พาดหัว <span class="hint">*คำ* = สีเน้น</span></span><textarea data-f="headline" id="s-${s.id}-headline" rows="2"></textarea></label>
+      <label>เนื้อความ<textarea data-f="body" id="s-${s.id}-body" rows="3"></textarea></label>
+      ${adOn?`<div class="ad-only">
+        <label><span class="lbl">พาดหัวการ์ดแอด <span class="cnt" data-max="32"></span></span><input type="text" data-f="cardHeadline" id="s-${s.id}-ch"></label>
+        <label><span class="lbl">คำอธิบายการ์ด <span class="cnt" data-max="20"></span></span><input type="text" data-f="cardDesc" id="s-${s.id}-cd"></label>
+      </div>`:''}
+      <div class="row">
+        <label class="btn btn-sm file">${images[s.id]?'เปลี่ยนรูป':'ใส่รูป'}<input type="file" accept="image/*" data-act="img" id="s-${s.id}-img"></label>
+        ${images[s.id]?'<button class="btn btn-sm btn-ghost" data-act="rmimg">ลบรูป</button>':''}
+        <button class="btn btn-sm btn-ghost ai-need" data-act="ai" ${aiReady?'':'disabled'}>AI เขียนใหม่</button>
+        <button class="btn btn-sm btn-ghost" data-act="png">PNG</button>
+      </div>`;
+    el.querySelectorAll('[data-f]').forEach(f=>{ f.value = s[f.dataset.f] ?? '' });
+    strip.appendChild(el);
+    updateCounts(el);
+  });
+  if(n<10){ const add=document.createElement('button'); add.className='add-card'; add.textContent='+ เพิ่มสไลด์'; add.onclick=()=>{ const at=Math.max(0,n-1); state.slides.splice(at,0,{id:uid(),type:'content',kicker:'',headline:'ประเด็นใหม่',body:'',cardHeadline:'',cardDesc:''}); changed(true) }; strip.appendChild(add) }
+  redrawAll();
+}
+function updateCounts(el){ el.querySelectorAll('.ad-only label').forEach(l=>{ const inp=l.querySelector('input'), cn=l.querySelector('.cnt'); const v=len(inp.value), m=+cn.dataset.max; cn.textContent=`${v}/${m}`; cn.classList.toggle('over',v>m) }) }
+async function redrawAll(){ await ensureFonts(); const n=state.slides.length; [...strip.querySelectorAll('.slide-card')].forEach((el,i)=>drawSlide(el.querySelector('canvas'),state.slides[i],i,n)); renderFeed() }
+async function redrawOne(i){ await ensureFonts(); const el=strip.querySelectorAll('.slide-card')[i]; if(el) drawSlide(el.querySelector('canvas'),state.slides[i],i,state.slides.length); renderFeedCards() }
+function changed(structural){ state.isSample=false; $('#sample-note').hidden=true; save(); if(structural) buildStrip(); else redrawAll() }
+
+strip.addEventListener('input',e=>{
+  const f=e.target.dataset.f; if(!f) return; const card=e.target.closest('.slide-card'); const i=+card.dataset.i;
+  state.slides[i][f]=e.target.value; save(); if(f==='type') { redrawAll(); return }
+  updateCounts(card); redrawOne(i);
+});
+strip.addEventListener('change',e=>{
+  const t=e.target; const card=t.closest('.slide-card'); if(!card) return; const i=+card.dataset.i, s=state.slides[i];
+  if(t.dataset.act==='img' && t.files[0]){ const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ images[s.id]=im; buildStrip() }; im.src=fr.result }; fr.readAsDataURL(t.files[0]) }
+});
+strip.addEventListener('click',e=>{
+  const b=e.target.closest('button[data-act]'); if(!b) return; const card=b.closest('.slide-card'); const i=+card.dataset.i; const S=state.slides;
+  const a=b.dataset.act;
+  if(a==='left'&&i>0){ [S[i-1],S[i]]=[S[i],S[i-1]]; changed(true) }
+  else if(a==='right'&&i<S.length-1){ [S[i+1],S[i]]=[S[i],S[i+1]]; changed(true) }
+  else if(a==='del'&&S.length>2){ delete images[S[i].id]; S.splice(i,1); changed(true) }
+  else if(a==='rmimg'){ delete images[S[i].id]; buildStrip() }
+  else if(a==='ai') rewriteSlide(i);
+  else if(a==='png') savePng(i);
+});
+
+/* ---------- feed preview ---------- */
+function renderFeed(){
+  const b=state.brief, av=$('#f-av'); av.innerHTML='';
+  if(logoImg){ const im=document.createElement('img'); im.src=logoImg.src; im.alt=''; av.appendChild(im) } else av.textContent=(b.brand||'?').trim().slice(0,1);
+  $('#f-name').textContent=b.brand||'ชื่อเพจ';
+  const isAd=b.mode!=='post';
+  $('#f-sub').textContent = isAd ? 'ได้รับการสนับสนุน' : 'เมื่อสักครู่';
+  $('#f-text').textContent = isAd ? (state.ad.primary||'') : [state.caption,state.hashtags].filter(Boolean).join('\n\n');
+  const wrap=$('#f-cards'); wrap.innerHTML='';
+  state.slides.forEach((s,i)=>{
+    const d=document.createElement('div'); d.className='fcard';
+    d.innerHTML = `<canvas></canvas>${isAd?`<div class="fb"><div><div class="fh"></div><div class="fd"></div></div><span class="fcta"></span></div>`:''}`;
+    if(isAd){ d.querySelector('.fh').textContent=s.cardHeadline||state.ad.headline||''; d.querySelector('.fd').textContent=s.cardDesc||state.ad.desc||''; d.querySelector('.fcta').textContent=ctaLabel(state.ad.cta) }
+    wrap.appendChild(d);
+  });
+  renderFeedCards();
+}
+function renderFeedCards(){
+  const big=[...strip.querySelectorAll('.slide-card canvas')], small=[...document.querySelectorAll('#f-cards canvas')];
+  const isAd=state.brief.mode!=='post';
+  small.forEach((cv,i)=>{ const src=big[i]; if(!src) return; const w=440, h=isAd?440:Math.round(440*src.height/src.width); cv.width=w; cv.height=h; const c=cv.getContext('2d');
+    if(isAd){ c.fillStyle=state.theme.bg; c.fillRect(0,0,w,h); const s=Math.max(w/src.width,h/src.height); c.drawImage(src,(w-src.width*s)/2,(h-src.height*s)/2,src.width*s,src.height*s) } else c.drawImage(src,0,0,w,h) });
+  const cards=document.querySelectorAll('#f-cards .fcard');
+  state.slides.forEach((s,i)=>{ const d=cards[i]; if(!d||!isAd) return; d.querySelector('.fh').textContent=s.cardHeadline||state.ad.headline||''; d.querySelector('.fd').textContent=s.cardDesc||state.ad.desc||'' });
+}
+
+/* ---------- brief + outputs binding ---------- */
+const BRIEF_IDS={brand:'b-brand',handle:'b-handle',product:'b-product',goal:'b-goal',tone:'b-tone',audience:'b-audience',extra:'b-extra',samples:'b-samples',voice:'b-voice',mode:'b-mode',lang:'b-lang',count:'b-count'};
+function fillBrief(){
+  for(const [k,id] of Object.entries(BRIEF_IDS)){ $('#'+id).value = state.brief[k] ?? '' }
+  $('#b-count-v').textContent=state.brief.count||6;
+  $('#a-primary').value=state.ad.primary||''; $('#a-headline').value=state.ad.headline||''; $('#a-desc').value=state.ad.desc||''; $('#a-cta').value=state.ad.cta||'LEARN_MORE'; $('#a-link').value=state.ad.link||'';
+  $('#p-caption').value=state.caption||''; $('#p-tags').value=state.hashtags||'';
+  adCounts(); renderHooks();
+  $('#sample-note').hidden=!state.isSample;
+}
+for(const [k,id] of Object.entries(BRIEF_IDS)){
+  $('#'+id).addEventListener('input',e=>{
+    state.brief[k] = k==='count' ? +e.target.value : e.target.value; save();
+    if(k==='count') $('#b-count-v').textContent=e.target.value;
+    if(k==='brand'||k==='handle') redrawAll();
+    if(k==='mode') buildStrip();
+  });
+}
+const AD_IDS={primary:'a-primary',headline:'a-headline',desc:'a-desc',cta:'a-cta',link:'a-link'};
+for(const [k,id] of Object.entries(AD_IDS)){ $('#'+id).addEventListener('input',e=>{ state.ad[k]=e.target.value; save(); adCounts(); if(k==='cta'||k==='link') redrawAll(); else renderFeed() }) }
+$('#p-caption').addEventListener('input',e=>{ state.caption=e.target.value; save(); renderFeed() });
+$('#p-tags').addEventListener('input',e=>{ state.hashtags=e.target.value; save(); renderFeed() });
+function adCounts(){ document.querySelectorAll('.cnt[data-c]').forEach(cn=>{ const v=len($('#'+cn.dataset.c).value), m=+cn.dataset.max; cn.textContent=`${v}/${m}`; cn.classList.toggle('over',v>m) }) }
+document.querySelectorAll('.tabs button').forEach(t=>t.addEventListener('click',()=>{
+  document.querySelectorAll('.tabs button').forEach(x=>{ x.setAttribute('aria-selected',x===t); $('#'+x.dataset.pane).hidden = x!==t })
+}));
+$('#a-cta').innerHTML = CTAS.map(([v,l])=>`<option value="${v}">${l}</option>`).join('');
+
+function renderHooks(){
+  const h=state.hooks||[]; $('#hooks-wrap').hidden=!h.length; const w=$('#hooks'); w.innerHTML='';
+  h.forEach(t=>{ const b=document.createElement('button'); b.textContent=t.replace(/\*/g,''); b.title='ใช้เป็นพาดหัวปก'; b.onclick=()=>{ const i=state.slides.findIndex(s=>s.type==='cover'); const k=i<0?0:i; state.slides[k].headline=t; changed(true) }; w.appendChild(b) });
+}
+
+/* ---------- theme controls ---------- */
+function renderThemeChips(){
+  const all=[...(state.pageThemes||[]),...THEMES,...customThemes()]; const w=$('#themes'); w.innerHTML='';
+  all.forEach(t=>{
+    const b=document.createElement('button'); b.className='tchip'; b.setAttribute('aria-pressed', state.themeId===t.id);
+    b.innerHTML=`<div class="sw" style="background:linear-gradient(135deg,${t.bg},${t.bg2||t.bg})"><em style="color:${t.ink};font-family:'${t.head}'">กก</em><b style="background:${t.accent}"></b><b style="background:${t.surface}"></b></div><span></span>`;
+    b.querySelector('span').textContent=t.name; b.title=t.name;
+    b.onclick=()=>{ state.themeId=t.id; state.theme={...t}; syncThemeUI(); save(); redrawAll() };
+    w.appendChild(b);
+  });
+}
+function syncThemeUI(){
+  renderThemeChips();
+  const T=state.theme;
+  COLOR_KEYS.forEach(([k])=>{ const el=$('#t-c-'+k); if(el) el.value=T[k]||(k==='chrome'?T.ink:'#000000') });
+  $('#t-head').value=T.head; $('#t-body').value=T.body; $('#t-deco').value=T.deco||'none';
+  document.querySelectorAll('#t-layout button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===T.layout));
+  document.querySelectorAll('#t-ratio button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.v===state.ratio));
+}
+$('#t-colors').innerHTML=COLOR_KEYS.map(([k,l])=>`<label class="color"><input type="color" id="t-c-${k}" data-k="${k}">${l}</label>`).join('');
+$('#t-colors').addEventListener('input',e=>{ const k=e.target.dataset.k; if(!k) return; state.theme[k]=e.target.value; state.themeId='custom'; renderThemeChips(); save(); redrawAll() });
+const fontOpts=FONTS.map(f=>`<option>${f}</option>`).join(''); $('#t-head').innerHTML=fontOpts; $('#t-body').innerHTML=fontOpts;
+$('#t-head').addEventListener('change',e=>{ state.theme.head=e.target.value; state.themeId='custom'; renderThemeChips(); save(); redrawAll() });
+$('#t-body').addEventListener('change',e=>{ state.theme.body=e.target.value; state.themeId='custom'; renderThemeChips(); save(); redrawAll() });
+$('#t-deco').addEventListener('change',e=>{ state.theme.deco=e.target.value; state.themeId='custom'; renderThemeChips(); save(); redrawAll() });
+$('#t-layout').addEventListener('click',e=>{ const v=e.target.dataset?.v; if(!v) return; state.theme.layout=v; state.themeId='custom'; syncThemeUI(); save(); redrawAll() });
+$('#t-ratio').addEventListener('click',e=>{ const v=e.target.dataset?.v; if(!v) return; state.ratio=v; syncThemeUI(); save(); buildStrip() });
+$('#save-theme').onclick=()=>{
+  const list=customThemes(); const t={...state.theme,id:'my-'+uid(),name:'ธีมของฉัน '+(list.length+1)};
+  list.push(t); try{ localStorage.setItem(STORE+'-themes',JSON.stringify(list.slice(-8))); state.themeId=t.id; renderThemeChips(); toast('บันทึกธีมแล้ว (เก็บในเบราว์เซอร์นี้)') }catch(e){ toast('บันทึกธีมไม่ได้ในเบราว์เซอร์นี้',true) }
+};
+$('#logo-in').addEventListener('change',e=>{ const f=e.target.files[0]; if(!f) return; const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{ logoImg=im; $('#logo-rm').hidden=false; try{ if(fr.result.length<400000) localStorage.setItem(STORE+'-logo',fr.result) }catch(_){} redrawAll() }; im.src=fr.result }; fr.readAsDataURL(f) });
+$('#logo-rm').onclick=()=>{ logoImg=null; $('#logo-rm').hidden=true; try{ localStorage.removeItem(STORE+'-logo') }catch(e){} redrawAll() };
+try{ const l=localStorage.getItem(STORE+'-logo'); if(l){ const im=new Image(); im.onload=()=>{ logoImg=im; $('#logo-rm').hidden=false; redrawAll() }; im.src=l } }catch(e){}
+
+$('#clear-sample').onclick=()=>{
+  state.isSample=false; state.brief={brand:'',handle:'',product:'',goal:'awareness',tone:'เป็นกันเอง สนุก',audience:'',extra:'',samples:'',voice:'',mode:'both',lang:'th',count:6};
+  state.slides=BLANK_SLIDES(); state.caption=''; state.hashtags=''; state.ad={primary:'',headline:'',desc:'',cta:'LEARN_MORE',link:''}; state.hooks=[]; images={};
+  fillBrief(); save(); buildStrip();
+};
+
+/* ---------- AI ---------- */
+const GOALS={awareness:'brand awareness',engagement:'engagement (saves, shares, comments)',traffic:'website traffic',leads:'lead generation / sign-ups',messages:'start Messenger conversations',sales:'direct sales / conversions'};
+const LANGS={th:'Thai',en:'English',mix:'Thai with natural English loanwords where Thai marketers would use them'};
+function briefText(){
+  const b=state.brief;
+  return `BRIEF
+- Brand / page: ${b.brand||'(not given)'} ${b.handle?`(${b.handle})`:''}
+- Product / service / topic: ${b.product||'(not given)'}
+- Campaign goal: ${GOALS[b.goal]||b.goal}
+- Target audience: ${b.audience||'(not given)'}
+- Tone of voice: ${b.tone}
+- Extra facts (prices, promos, constraints) — use ONLY these facts, never invent numbers or claims: ${b.extra||'(none)'}
+- Usage: ${b.mode==='post'?'organic Facebook post':b.mode==='ad'?'Facebook carousel ad':'organic post and Facebook carousel ad'}
+- Visual theme: "${state.theme.name||'custom'}", layout ${state.theme.layout}, fonts ${state.theme.head}/${state.theme.body}. Match the copy's mood to it.
+- Page voice and style: ${b.voice||'(not given — follow the tone above)'}
+- Past posts from this page (imitate their wording, sentence length, particles and emoji habits; do not copy their facts): ${b.samples?b.samples.slice(0,3000):'(none)'}
+- Output language: ${LANGS[b.lang]}`;
+}
+const SHAPE=`{"slides":[{"type":"cover|content|cta","kicker":"...","headline":"...","body":"...","card_headline":"...","card_description":"..."}],"hooks":["...","...","..."],"post_caption":"...","hashtags":["#...","#..."],"ad":{"primary_text":"...","headline":"...","description":"...","cta":"LEARN_MORE"}}`;
+const RULES=`RULES
+- Slide 1 is type "cover": a scroll-stopping hook headline (max ~45 characters), kicker max ~22 characters, body one short teaser line or empty.
+- Middle slides are type "content": one idea each, in a logical sequence that rewards swiping. headline max ~50 characters, body max ~140 characters, concrete and specific.
+- Last slide is type "cta": a clear call to action that fits the goal; body states the offer using only facts from the brief.
+- In every headline wrap exactly one key phrase in *asterisks* (it is rendered in the accent colour).
+- No emoji inside slide text. Plain text only, no markdown other than the *asterisks*.
+- card_headline max 32 characters, card_description max 20 characters (shown under each card in a Facebook carousel ad).
+- "hooks": 3 alternative cover headlines for A/B testing, same *asterisk* rule.
+- post_caption: 3–6 short lines for an organic post, may use 1–2 emoji, ends with a question or CTA. hashtags: 5–8 relevant tags.
+- ad.primary_text: max 125 characters, hook in the first line. ad.headline max 40 characters. ad.description max 30 characters.
+- ad.cta must be one of: ${CTAS.map(c=>c[0]).join(', ')}, chosen to fit the goal.
+- Follow Meta advertising policies: do not assert or imply personal attributes of the reader (health, finances, body), no guaranteed results, no exaggerated health or income claims.`;
+function genPrompt(){
+  return `You are a senior social-media copywriter and Facebook ads strategist who writes carousel content for Thai brands.
+Write a ${state.brief.count||6}-slide carousel.
+
+${briefText()}
+
+${RULES}
+
+Reply with only a JSON object in exactly this shape:
+${SHAPE}`;
+}
+function slimContent(){ return JSON.stringify({slides:state.slides.map(s=>({type:s.type,kicker:s.kicker,headline:s.headline,body:s.body,card_headline:s.cardHeadline,card_description:s.cardDesc})),post_caption:state.caption,hashtags:state.hashtags,ad:{primary_text:state.ad.primary,headline:state.ad.headline,description:state.ad.desc,cta:state.ad.cta}}) }
+function refinePrompt(instr){
+  return `You are a senior social-media copywriter and Facebook ads strategist. Revise this carousel according to the instruction. Keep what already works; change what the instruction asks. You may change the number of slides only if the instruction asks (2–10).
+
+INSTRUCTION: ${instr}
+
+${briefText()}
+
+CURRENT CONTENT (JSON):
+${slimContent()}
+
+${RULES}
+
+Reply with only a JSON object in exactly this shape:
+${SHAPE}`;
+}
+const str = (v,max=400) => (typeof v==='string'?v:v==null?'':String(v)).trim().slice(0,max);
+function applyContent(d){
+  if(!d||!Array.isArray(d.slides)||!d.slides.length) throw {code:'invalid_json'};
+  const old=state.slides;
+  state.slides=d.slides.slice(0,10).map((s,i)=>({id:old[i]?.id||uid(),type:['cover','content','cta'].includes(s?.type)?s.type:(i===0?'cover':'content'),kicker:str(s?.kicker,80),headline:str(s?.headline,160),body:str(s?.body,400),cardHeadline:str(s?.card_headline,60),cardDesc:str(s?.card_description,40)}));
+  if(state.slides.length<2) state.slides.push({id:uid(),type:'cta',kicker:'',headline:'',body:'',cardHeadline:'',cardDesc:''});
+  if(d.post_caption!=null) state.caption=str(d.post_caption,2200);
+  if(d.hashtags!=null) state.hashtags=Array.isArray(d.hashtags)?d.hashtags.map(h=>str(h,40)).filter(Boolean).map(h=>h.startsWith('#')?h:'#'+h).join(' '):str(d.hashtags,400);
+  if(d.ad){ state.ad.primary=str(d.ad.primary_text,600); state.ad.headline=str(d.ad.headline,80); state.ad.desc=str(d.ad.description,60); if(CTAS.some(c=>c[0]===d.ad.cta)) state.ad.cta=d.ad.cta }
+  if(Array.isArray(d.hooks)) state.hooks=d.hooks.map(h=>str(h,120)).filter(Boolean).slice(0,5);
+  state.isSample=false; fillBrief(); save(); buildStrip();
+}
+const ERR={not_granted:'ยังไม่ได้อนุญาตให้หน้านี้ใช้ Claude',sampling_disabled:'บัญชีนี้ใช้ Claude ในหน้านี้ไม่ได้',rate_limited:'เรียกใช้ AI ถี่เกินไป รอสักครู่แล้วลองใหม่',session_expired:'กรุณาเข้าสู่ระบบ Claude ใหม่',refused:'AI ไม่สามารถเขียนเนื้อหานี้ได้ ลองปรับบรีฟ',invalid_json:'AI ตอบกลับในรูปแบบที่อ่านไม่ได้ ลองกดอีกครั้ง',empty_completion:'AI ไม่ได้ตอบอะไรกลับมา ลองปรับบรีฟให้ชัดขึ้น',prompt_too_large:'ข้อมูลยาวเกินไป ลองย่อบรีฟ',upstream_error:'การเชื่อมต่อขัดข้อง ลองอีกครั้ง'};
+Object.assign(ERR,{no_key:'ใส่ API key ในกล่อง “การเชื่อมต่อ AI” ก่อน',bad_key:'API key ไม่ถูกต้องหรือไม่มีสิทธิ์ ตรวจสอบคีย์อีกครั้ง',bad_model:'ไม่พบโมเดลนี้ ลองเลือกชื่อโมเดลจากรายการ',network:'ติดต่อผู้ให้บริการ AI ไม่ได้ ตรวจสอบอินเทอร์เน็ต',bad_request:'ผู้ให้บริการ AI ปฏิเสธคำขอ',no_credit:'เครดิตหรือโควตาของบัญชี AI หมด'});
+const FATAL=['not_granted','sampling_disabled','not_declared','capability_disabled','capability_removed'];
+
+/* ---------- AI providers ---------- */
+const IN_VIEWER = !!window.claude;
+const PROVIDERS={
+  builtin:{label:'Claude ในหน้านี้'},
+  claude:{label:'Claude API',models:['claude-opus-5-5','claude-sonnet-5-5','claude-haiku-5-5'],def:'claude-opus-5-5',help:'สร้างคีย์ได้ที่ platform.claude.com → API Keys (คิดเงินตามการใช้งาน)'},
+  openai:{label:'ChatGPT API',models:['gpt-5.5','chat-latest'],def:'gpt-5.5',help:'สร้างคีย์ได้ที่ platform.openai.com → API keys (คิดเงินตามการใช้งาน)'},
+  gemini:{label:'Gemini API',models:['gemini-3.5-flash','gemini-3.1-flash-lite','gemini-pro-latest'],def:'gemini-3.5-flash',help:'สร้างคีย์ได้ที่ aistudio.google.com → Get API key (มีโควตาฟรี)'},
+  manual:{label:'คัดลอก–วาง'},
+};
+const API_P=['claude','openai','gemini'];
+function loadAI(){ const d={provider:'',model:{},key:{},remember:false}; try{ return {...d,...JSON.parse(localStorage.getItem(STORE+'-ai')||'{}')} }catch(e){ return d } }
+let ai=loadAI();
+function saveAI(){ try{ localStorage.setItem(STORE+'-ai',JSON.stringify({provider:ai.provider,model:ai.model,remember:ai.remember,key:ai.remember?ai.key:{}})) }catch(e){} }
+function refreshProviderUI(){
+  const sel=$('#p-provider');
+  [...sel.options].forEach(o=>{ if(o.value==='builtin') o.disabled=!sample; if(API_P.includes(o.value)) o.disabled=IN_VIEWER });
+  const cur=sel.querySelector(`option[value="${ai.provider}"]`);
+  if(!cur||cur.disabled) ai.provider = sample ? 'builtin' : 'manual';
+  sel.value=ai.provider;
+  const api=API_P.includes(ai.provider); $('#p-api').hidden=!api;
+  if(api){ const P=PROVIDERS[ai.provider]; $('#p-key').value=ai.key[ai.provider]||''; $('#p-model').value=ai.model[ai.provider]||P.def; $('#p-models').innerHTML=P.models.map(m=>`<option value="${m}"></option>`).join(''); $('#p-key-help').textContent=P.help }
+  $('#p-remember').checked=!!ai.remember;
+  $('#ai-where').textContent = IN_VIEWER ? 'เปิดผ่าน Claude' : 'โปรแกรมในเครื่อง';
+  $('#p-note').textContent = IN_VIEWER
+    ? 'อยากใช้ ChatGPT, Gemini หรือ Claude API ด้วยคีย์ของคุณเอง กด “ดาวน์โหลดโปรแกรม” ด้านบน แล้วเปิดไฟล์ในเบราว์เซอร์ หรือเลือก “คัดลอกไปวางใน AI ตัวไหนก็ได้”'
+    : ai.provider==='manual' ? 'ไม่ต้องใช้คีย์ โปรแกรมจะสร้างคำสั่งให้คัดลอกไปวางใน ChatGPT, Gemini หรือ Claude แล้ววางคำตอบกลับมา'
+    : 'คีย์จะถูกส่งจากเบราว์เซอร์นี้ไปยังผู้ให้บริการ AI โดยตรงเท่านั้น';
+  aiReady=true; setBusy(null);
+}
+$('#p-provider').addEventListener('change',e=>{ ai.provider=e.target.value; saveAI(); refreshProviderUI() });
+$('#p-key').addEventListener('input',e=>{ ai.key[ai.provider]=e.target.value.trim(); saveAI() });
+$('#p-model').addEventListener('input',e=>{ ai.model[ai.provider]=e.target.value.trim(); saveAI() });
+$('#p-remember').addEventListener('change',e=>{ ai.remember=e.target.checked; saveAI() });
+$('#p-key-show').onclick=()=>{ const k=$('#p-key'); const show=k.type==='password'; k.type=show?'text':'password'; $('#p-key-show').textContent=show?'ซ่อน':'แสดง' };
+
+function httpErr(status,msg){ const code = status===401||status===403 ? 'bad_key' : status===404 ? 'bad_model' : status===429 ? 'rate_limited' : status===402 ? 'no_credit' : status>=400&&status<500 ? 'bad_request' : 'upstream_error'; return {code,message:msg||''} }
+async function readJSON(res){ try{ return await res.json() }catch(e){ return {} } }
+async function callAI(prompt,{images=[],quick=false,signal}={}){
+  const p=ai.provider;
+  if(p==='builtin'){
+    if(!sample) throw {code:'not_granted'};
+    const o={signal,cache:false,modelTier:quick?'quick':'default'};
+    if(images.length){ const lim=await sample.limits().catch(()=>null); if(lim?.images) o.images=images.slice(0,lim.images.maxCount).map(x=>x.blob) }
+    return (await sample(prompt,o)).text;
+  }
+  if(p==='manual') return manualAsk(prompt,images.length,signal);
+  const key=(ai.key[p]||'').trim(); if(!key) throw {code:'no_key'};
+  const model=(ai.model[p]||PROVIDERS[p].def).trim();
+  let res, d;
+  if(p==='claude'){
+    const content=[...images.map(im=>({type:'image',source:{type:'base64',media_type:im.type,data:im.b64}})),{type:'text',text:prompt}];
+    const body={model,max_tokens:16000,messages:[{role:'user',content}]};
+    const headers={'content-type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'};
+    if(/^claude-(opus|sonnet|haiku|fable)-5/.test(model)) body.output_config={effort:quick?'low':'medium'};
+    if(/^claude-(opus-5|sonnet-5-5|fable-5)/.test(model)){ body.fallbacks='default'; headers['anthropic-beta']='server-side-fallback-2026-07-01' }
+    res=await fetch('https://api.anthropic.com/v1/messages',{method:'POST',signal,headers,body:JSON.stringify(body)});
+    d=await readJSON(res); if(!res.ok) throw httpErr(res.status,d?.error?.message);
+    if(d.stop_reason==='refusal') throw {code:'refused'};
+    return (d.content||[]).filter(b=>b.type==='text').map(b=>b.text).join('');
+  }
+  if(p==='openai'){
+    const content=[{type:'text',text:prompt},...images.map(im=>({type:'image_url',image_url:{url:`data:${im.type};base64,${im.b64}`}}))];
+    res=await fetch('https://api.openai.com/v1/chat/completions',{method:'POST',signal,headers:{'content-type':'application/json',authorization:'Bearer '+key},body:JSON.stringify({model,messages:[{role:'user',content}],response_format:{type:'json_object'}})});
+    d=await readJSON(res); if(!res.ok) throw httpErr(res.status,d?.error?.message);
+    const m=d.choices?.[0]?.message; if(m?.refusal) throw {code:'refused'};
+    return m?.content||'';
+  }
+  if(p==='gemini'){
+    const parts=[{text:prompt},...images.map(im=>({inline_data:{mime_type:im.type,data:im.b64}}))];
+    res=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`,{method:'POST',signal,headers:{'content-type':'application/json','x-goog-api-key':key},body:JSON.stringify({contents:[{role:'user',parts}],generationConfig:{responseMimeType:'application/json'}})});
+    d=await readJSON(res); if(!res.ok) throw httpErr(res.status,d?.error?.message);
+    const t=(d.candidates?.[0]?.content?.parts||[]).map(x=>x.text||'').join('');
+    if(!t && d.promptFeedback?.blockReason) throw {code:'refused'};
+    return t;
+  }
+  throw {code:'upstream_error'};
+}
+function parseJSON(text){
+  const t=String(text||'').trim(); if(!t) throw {code:'empty_completion'};
+  try{ return JSON.parse(t) }catch(e){}
+  const f=t.match(/```(?:json)?\s*([\s\S]*?)```/i); if(f){ try{ return JSON.parse(f[1]) }catch(e){} }
+  const a=t.search(/[\[{]/), b=Math.max(t.lastIndexOf('}'),t.lastIndexOf(']'));
+  if(a>=0&&b>a){ try{ return JSON.parse(t.slice(a,b+1)) }catch(e){} }
+  throw {code:'invalid_json'};
+}
+let manualResolve=null, manualReject=null;
+function manualAsk(prompt,nImg,signal){
+  return new Promise((res,rej)=>{
+    manualResolve=res; manualReject=rej;
+    signal?.addEventListener('abort',()=>{ if(manualReject===rej){ closeManual(); rej({code:'cancelled'}) } });
+    $('#m-prompt').value=prompt; $('#m-answer').value='';
+    $('#m-img-step').hidden=!nImg; $('#m-img-n').textContent=nImg||'';
+    $('#manual').hidden=false; $('#m-copy').focus();
+  });
+}
+function closeManual(){ $('#manual').hidden=true; manualResolve=manualReject=null }
+$('#m-copy').onclick=()=>copy($('#m-prompt').value);
+$('#m-cancel').onclick=()=>{ const r=manualReject; closeManual(); r?.({code:'cancelled'}) };
+$('#m-import').onclick=()=>{ const v=$('#m-answer').value.trim(); if(!v){ $('#m-answer').focus(); return } const r=manualResolve; closeManual(); r?.(v) };
+document.addEventListener('keydown',e=>{ if(e.key==='Escape' && !$('#manual').hidden) $('#m-cancel').click() });
+
+async function runAI(label, input, apply, opts={}){
+  if(busy) return;
+  busy=true; ctl=new AbortController(); setBusy(label);
+  try{ const text=await callAI(input,{...opts,signal:ctl.signal}); apply(parseJSON(text)); toast('เสร็จแล้ว') }
+  catch(e){
+    const code=e?.code || (e?.name==='AbortError'?'cancelled':(e instanceof TypeError?'network':'upstream_error'));
+    if(code!=='cancelled') toast((ERR[code]||ERR.upstream_error)+(e?.message&&code==='bad_request'?`: ${String(e.message).slice(0,120)}`:''),true);
+    if(ai.provider==='builtin' && FATAL.includes(code)){ sample=null; refreshProviderUI() }
+  }
+  finally{ busy=false; ctl=null; setBusy(null) }
+}
+$('#gen-btn').onclick=()=>{ if(!state.brief.product.trim()){ toast('ใส่สินค้า/บริการ/หัวข้อก่อน',true); $('#b-product').focus(); return } runAI('กำลังวางโครงเรื่องและเขียนสไลด์…',genPrompt(),applyContent) };
+$('#refine-btn').onclick=()=>{ const v=$('#refine-in').value.trim(); if(!v){ $('#refine-in').focus(); return } runAI('กำลังปรับเนื้อหาตามคำสั่ง…',refinePrompt(v),d=>{ applyContent(d); $('#refine-in').value='' }) };
+$('#refine-in').addEventListener('keydown',e=>{ if(e.key==='Enter') $('#refine-btn').click() });
+function rewriteSlide(i){
+  const s=state.slides[i];
+  const p=`You are a senior social-media copywriter. Rewrite slide ${i+1} of ${state.slides.length} of this carousel so it is sharper and more specific, keeping its role (${s.type}) in the sequence.
+
+${briefText()}
+
+FULL CAROUSEL (JSON):
+${slimContent()}
+
+${RULES}
+
+Reply with only a JSON object: {"kicker":"...","headline":"...","body":"...","card_headline":"...","card_description":"..."}`;
+  runAI(`กำลังเขียนสไลด์ ${i+1} ใหม่…`,p,d=>{ if(!d||typeof d!=='object') throw {code:'invalid_json'}; Object.assign(state.slides[i],{kicker:str(d.kicker,80),headline:str(d.headline,160),body:str(d.body,400),cardHeadline:str(d.card_headline,60),cardDesc:str(d.card_description,40)}); state.isSample=false; save(); buildStrip() },{quick:true});
+}
+$('#ai-theme-btn').onclick=()=>{
+  const mood=$('#t-mood').value.trim()||`${state.brief.brand} ${state.brief.product} tone: ${state.brief.tone}`;
+  const p=`Design a colour + type theme for Facebook carousel slides.
+Mood / brand: ${mood}
+Fonts available (choose head and body from this list only): ${FONTS.join(', ')}
+Layouts: "bold" (big type on background), "card" (text on a floating surface card), "band" (accent colour band at top). Decorations: none, shapes, dots, grid, lines.
+Requirements: ink on bg and ink on surface must have strong contrast (WCAG AA for large text at least); onAccent on accent must be readable; muted must be readable on bg; bg2 is a gradient end colour close to bg (or equal to bg for flat).
+Reply with only JSON: {"name":"short Thai name","bg":"#RRGGBB","bg2":"#RRGGBB","ink":"#RRGGBB","muted":"#RRGGBB","accent":"#RRGGBB","onAccent":"#RRGGBB","surface":"#RRGGBB","head":"font","body":"font","layout":"bold|card|band","deco":"none|shapes|dots|grid|lines"}`;
+  runAI('กำลังออกแบบธีม…',p,d=>{
+    state.theme=themeFromAI(d,'ai','ธีมจาก AI'); state.themeId='ai'; syncThemeUI(); save(); redrawAll();
+  },{quick:true});
+};
+$('#stop-btn').onclick=()=>ctl?.abort();
+function setBusy(label){
+  $('#busy').hidden=!label; $('#busy-t').textContent=label||''; $('#stop-btn').hidden=!label;
+  const pill=$('#ai-pill'); pill.dataset.s = label?'busy':(aiReady?'on':'wait');
+  $('#ai-pill-t').textContent = label ? 'AI กำลังทำงาน' : aiReady ? `AI: ${PROVIDERS[ai.provider]?.label||''}` : 'กำลังเชื่อมต่อ AI…';
+  document.querySelectorAll('.ai-need').forEach(b=>b.disabled=!!label||!aiReady);
+}
+
+/* ---------- colour maths ---------- */
+const hx2=v=>Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0');
+const toHex=c=>('#'+hx2(c.r)+hx2(c.g)+hx2(c.b)).toUpperCase();
+function rgbOf(hex){ const n=parseInt(hex.slice(1),16); return {r:n>>16&255,g:n>>8&255,b:n&255} }
+function mix(a,b,t){ const A=rgbOf(a),B=rgbOf(b); return toHex({r:A.r+(B.r-A.r)*t,g:A.g+(B.g-A.g)*t,b:A.b+(B.b-A.b)*t}) }
+function lum(hex){ const {r,g,b}=rgbOf(hex); const f=v=>{ v/=255; return v<=.03928?v/12.92:Math.pow((v+.055)/1.055,2.4) }; return .2126*f(r)+.7152*f(g)+.0722*f(b) }
+function contrast(a,b){ const x=lum(a),y=lum(b); return (Math.max(x,y)+.05)/(Math.min(x,y)+.05) }
+function hsl(hex){ let {r,g,b}=rgbOf(hex); r/=255; g/=255; b/=255; const mx=Math.max(r,g,b), mn=Math.min(r,g,b), l=(mx+mn)/2; let h=0,s=0;
+  if(mx!==mn){ const d=mx-mn; s=l>.5?d/(2-mx-mn):d/(mx+mn); h = mx===r?((g-b)/d+(g<b?6:0)) : mx===g?((b-r)/d+2) : ((r-g)/d+4); h*=60 } return {h,s,l} }
+const pickOn = bg => contrast('#FFFFFF',bg) >= contrast('#141414',bg) ? '#FFFFFF' : '#141414';
+function ensureC(fg,bg,min){ if(contrast(fg,bg)>=min) return fg; const to=lum(bg)>.4?'#000000':'#FFFFFF'; let c=fg; for(let i=1;i<=10&&contrast(c,bg)<min;i++) c=mix(fg,to,i/10); return c }
+const isHex=v=>/^#[0-9a-f]{6}$/i.test(v||'');
+function fixTheme(t){
+  const ground=t.layout==='card'?t.surface:t.bg;
+  t.ink=ensureC(t.ink,ground,7);
+  t.muted=ensureC(t.muted,ground,4.5);
+  t.accent=ensureC(t.accent,ground,t.layout==='band'?1:3);
+  if(contrast(t.onAccent,t.accent)<4.5) t.onAccent=pickOn(t.accent);
+  if(t.chrome && contrast(t.chrome,t.bg)<4.5) t.chrome=pickOn(t.bg);
+  return t;
+}
+
+/* ---------- theme from the page ---------- */
+let pageImgs=[]; // {url, img, blob, type, b64}
+function shrink(img,max){ const s=Math.min(1,max/Math.max(img.width,img.height)); const c=document.createElement('canvas'); c.width=Math.max(1,Math.round(img.width*s)); c.height=Math.max(1,Math.round(img.height*s)); c.getContext('2d').drawImage(img,0,0,c.width,c.height); return c }
+function renderPageThumbs(){
+  const w=$('#pg-thumbs'); w.innerHTML='';
+  pageImgs.forEach((p,i)=>{ const d=document.createElement('div'); d.className='thumb'; d.innerHTML=`<img alt="ภาพของเพจ ${i+1}"><button title="เอาออก" aria-label="เอาภาพออก">✕</button>`; d.querySelector('img').src=p.url; d.querySelector('button').onclick=()=>{ pageImgs.splice(i,1); renderPageThumbs() }; w.appendChild(d) });
+}
+$('#pg-in').addEventListener('change',e=>{
+  const files=[...e.target.files].slice(0,4-pageImgs.length); e.target.value='';
+  if(!files.length){ toast('ใส่ภาพได้สูงสุด 4 ภาพ',true); return }
+  files.forEach(f=>{ const fr=new FileReader(); fr.onload=()=>{ const im=new Image(); im.onload=()=>{
+    const c=shrink(im,1024); const url=c.toDataURL('image/jpeg',.86);
+    c.toBlob(blob=>{ pageImgs.push({url,img:im,blob,type:'image/jpeg',b64:url.split(',')[1]}); renderPageThumbs() },'image/jpeg',.86);
+  }; im.src=fr.result }; fr.readAsDataURL(f) });
+});
+function manualHex(){ return ($('#pg-hex').value.match(/#?[0-9a-f]{6}\b/gi)||[]).map(h=>('#'+h.replace('#','')).toUpperCase()) }
+function extractColors(){
+  const buckets=new Map();
+  for(const p of pageImgs){
+    const c=shrink(p.img,90); const d=c.getContext('2d',{willReadFrequently:true}).getImageData(0,0,c.width,c.height).data;
+    for(let i=0;i<d.length;i+=4){ if(d[i+3]<128) continue; const k=(d[i]>>4)<<8|(d[i+1]>>4)<<4|(d[i+2]>>4); const b=buckets.get(k)||{r:0,g:0,b:0,n:0}; b.r+=d[i]; b.g+=d[i+1]; b.b+=d[i+2]; b.n++; buckets.set(k,b) }
+  }
+  const cols=[...buckets.values()].map(b=>({r:b.r/b.n,g:b.g/b.n,b:b.b/b.n,n:b.n})).sort((a,b)=>b.n-a.n);
+  const out=[];
+  for(const c of cols){ const m=out.find(o=>Math.hypot(o.r-c.r,o.g-c.g,o.b-c.b)<44); if(m){ const t=m.n+c.n; m.r=(m.r*m.n+c.r*c.n)/t; m.g=(m.g*m.n+c.g*c.n)/t; m.b=(m.b*m.n+c.b*c.n)/t; m.n=t } else out.push({...c}) }
+  return out.sort((a,b)=>b.n-a.n).slice(0,8).map(c=>({hex:toHex(c),n:c.n}));
+}
+function paletteNow(){ return [...manualHex().map(hex=>({hex,n:1e9,manual:true})),...extractColors()] }
+function showPalette(pal){ const w=$('#pg-palette'); w.innerHTML=''; pal.slice(0,10).forEach(c=>{ const s=document.createElement('span'); s.style.background=c.hex; s.title=c.hex; w.appendChild(s) }) }
+function themesFromPalette(pal){
+  const info=pal.map(c=>({...c,...hsl(c.hex)}));
+  const score=c=>(c.manual?1e6:0)+c.s*Math.sqrt(c.n);
+  const sat=info.filter(c=>c.manual||(c.s>.3&&c.l>.18&&c.l<.78)).sort((a,b)=>score(b)-score(a));
+  const accent=sat[0]?.hex||'#2346D6', ah=hsl(accent).h;
+  const accent2=sat.find(c=>c.hex!==accent&&c.l>.3&&c.l<.75&&c.s>.35&&Math.min(Math.abs(c.h-ah),360-Math.abs(c.h-ah))>40)?.hex||null;
+  const dark=info.filter(c=>c.l<.22).sort((a,b)=>b.n-a.n)[0]?.hex||mix(accent,'#000000',.85);
+  const light=info.filter(c=>c.l>.88).sort((a,b)=>b.n-a.n)[0]?.hex||mix(accent,'#FFFFFF',.94);
+  const base={head:state.theme.head,body:state.theme.body};
+  const hi=accent2||accent;
+  return [
+    fixTheme({...base,id:'page-light',name:'จากเพจ · สว่าง',bg:light,bg2:mix(light,accent,.08),ink:dark,muted:mix(dark,light,.35),accent,onAccent:pickOn(accent),surface:lum(light)>.9?'#FFFFFF':mix(light,'#FFFFFF',.6),layout:'card',deco:'shapes'}),
+    fixTheme({...base,id:'page-dark',name:'จากเพจ · เข้ม',bg:dark,bg2:mix(dark,accent,.2),ink:light,muted:mix(light,dark,.3),accent:ensureC(accent,dark,3),onAccent:pickOn(ensureC(accent,dark,3)),surface:mix(dark,light,.07),layout:'bold',deco:'lines'}),
+    fixTheme({...base,id:'page-brand',name:'จากเพจ · สีแบรนด์',bg:accent,bg2:mix(accent,dark,.3),ink:dark,muted:mix(dark,light,.35),accent:ensureC(hi===accent?mix(accent,dark,.2):hi,light,3),onAccent:'#FFFFFF',surface:light,chrome:pickOn(accent),layout:'card',deco:'shapes'}),
+  ];
+}
+$('#pg-extract').onclick=()=>{
+  if(!pageImgs.length && !manualHex().length){ toast('เพิ่มภาพของเพจหรือใส่รหัสสีแบรนด์ก่อน',true); return }
+  const pal=paletteNow(); showPalette(pal);
+  state.pageThemes=themesFromPalette(pal); state.theme={...state.pageThemes[0]}; state.themeId=state.theme.id;
+  syncThemeUI(); save(); redrawAll(); toast('สร้าง 3 ธีมจากสีของเพจแล้ว เลือกได้ในรายการธีม');
+};
+$('#pg-ai').onclick=()=>{
+  if(!pageImgs.length && !manualHex().length && !state.brief.samples.trim()){ toast('เพิ่มภาพของเพจ รหัสสี หรือตัวอย่างโพสต์เดิมก่อน',true); return }
+  const pal=pageImgs.length||manualHex().length ? paletteNow() : []; showPalette(pal);
+  const p=`You are a brand designer. ${pageImgs.length?`The ${pageImgs.length} attached image(s) come from a Facebook page (logo, cover photo and/or screenshots of past posts).`:''}
+Design a theme for new carousel slides so they look like they belong to this page: same colour personality, similar typographic feel, similar density.
+Colours measured from the page images (most frequent first): ${pal.map(c=>c.hex).join(', ')||'(none)'}
+Brand colours the owner typed (must be used): ${manualHex().join(', ')||'(none)'}
+Brand: ${state.brief.brand||'(not given)'} — ${state.brief.product||''}
+Past posts from the page (for the writing voice): ${state.brief.samples?state.brief.samples.slice(0,2500):'(none)'}
+Fonts available (choose head and body from this list only, all support Thai): ${FONTS.join(', ')}
+Layouts: "bold" (big type on background), "card" (text on a floating surface card), "band" (accent colour band at top). Decorations: none, shapes, dots, grid, lines.
+Requirements: ink must have strong contrast on bg and on surface; onAccent must be readable on accent; muted readable on bg; bg2 is a gradient end close to bg (equal to bg for flat); chrome is the colour for the small header/footer text drawn directly on bg.
+"voice": describe the page's writing voice in Thai in 1–3 short sentences (how it addresses readers, sentence length, particles, emoji habits). Empty string if there is nothing to go on.
+Reply with only JSON: {"name":"short Thai name","bg":"#RRGGBB","bg2":"#RRGGBB","ink":"#RRGGBB","muted":"#RRGGBB","accent":"#RRGGBB","onAccent":"#RRGGBB","surface":"#RRGGBB","chrome":"#RRGGBB","head":"font","body":"font","layout":"bold|card|band","deco":"none|shapes|dots|grid|lines","voice":"..."}`;
+  runAI('กำลังวิเคราะห์สไตล์ของเพจ…',p,d=>{
+    const t=themeFromAI(d,'page-ai','สไตล์เพจ (AI)');
+    state.pageThemes=[t,...(state.pageThemes||[]).filter(x=>x.id!=='page-ai')].slice(0,4);
+    state.theme={...t}; state.themeId=t.id;
+    if(typeof d.voice==='string' && d.voice.trim()){ state.brief.voice=str(d.voice,400); $('#b-voice').value=state.brief.voice }
+    syncThemeUI(); save(); redrawAll();
+  },{images:pageImgs});
+};
+function themeFromAI(d,id,fallbackName){
+  const keys=['bg','bg2','ink','muted','accent','onAccent','surface'];
+  if(!d||!keys.every(k=>isHex(d[k]))) throw {code:'invalid_json'};
+  const t={id,name:str(d.name,30)||fallbackName}; keys.forEach(k=>t[k]=d[k].toUpperCase());
+  if(isHex(d.chrome)) t.chrome=d.chrome.toUpperCase();
+  t.head=FONTS.includes(d.head)?d.head:'Prompt'; t.body=FONTS.includes(d.body)?d.body:'Sarabun';
+  t.layout=['bold','card','band'].includes(d.layout)?d.layout:'bold'; t.deco=['none','shapes','dots','grid','lines'].includes(d.deco)?d.deco:'none';
+  return fixTheme(t);
+}
+
+/* ---------- export ---------- */
+function canvasBlob(cv){ return new Promise(r=>cv.toBlob(r,'image/png')) }
+const slug = () => (state.brief.brand||'carousel').replace(/[^\p{L}\p{N}]+/gu,'-').replace(/^-|-$/g,'')||'carousel';
+function copyText(){
+  return `แคปชันโพสต์\n${state.caption}\n\n${state.hashtags}\n\n---\nข้อความแอด\nPrimary text: ${state.ad.primary}\nHeadline: ${state.ad.headline}\nDescription: ${state.ad.desc}\nCTA: ${ctaLabel(state.ad.cta)}\nLink: ${state.ad.link}\n\nการ์ด\n`+state.slides.map((s,i)=>`${i+1}. ${s.cardHeadline} | ${s.cardDesc}`).join('\n');
+}
+async function saveFile(name,data){
+  if(downloads){ try{ await downloads.save({filename:name,data}); toast('บันทึกแล้ว') }catch(e){ if(e?.code!=='declined') toast('บันทึกไฟล์ไม่สำเร็จ',true) } return }
+  if(!IN_VIEWER){ const blob=data instanceof Blob?data:new Blob([data]); const u=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=u; a.download=name; document.body.appendChild(a); a.click(); a.remove(); setTimeout(()=>URL.revokeObjectURL(u),5000); toast('บันทึกแล้ว'); return }
+  toast('ดาวน์โหลดไม่ได้ในมุมมองนี้ คลิกขวาที่ภาพแล้วเลือกบันทึกรูปแทน',true);
+}
+async function savePng(i){ await redrawOne(i); const cv=strip.querySelectorAll('.slide-card canvas')[i]; saveFile(`${slug()}-${pad(i+1)}.png`, await canvasBlob(cv)) }
+$('#zip-btn').onclick=async()=>{
+  if(typeof JSZip==='undefined'){ toast('โหลดตัวสร้างไฟล์ zip ไม่สำเร็จ (ต้องต่ออินเทอร์เน็ต) ใช้ปุ่ม PNG ใต้แต่ละสไลด์แทน',true); return }
+  await redrawAll();
+  const zip=new JSZip(); const cvs=[...strip.querySelectorAll('.slide-card canvas')];
+  for(let i=0;i<cvs.length;i++) zip.file(`${slug()}-${pad(i+1)}.png`, await canvasBlob(cvs[i]));
+  zip.file('copy.txt', copyText());
+  saveFile(`${slug()}-carousel.zip`, await zip.generateAsync({type:'blob'}));
+};
+$('#get-app').onclick=async()=>{
+  try{ const r=await fetch('app/Carousel-Studio.html'); if(!r.ok) throw 0; saveFile('Carousel-Studio.html', await r.blob()) }
+  catch(e){ toast('โหลดไฟล์โปรแกรมไม่สำเร็จ ลองใหม่อีกครั้ง',true) }
+};
+async function copy(t){ try{ await navigator.clipboard.writeText(t); toast('คัดลอกแล้ว') }catch(e){ toast('คัดลอกอัตโนมัติไม่ได้ เลือกข้อความแล้วกด Ctrl+C',true) } }
+$('#copy-ad').onclick=()=>copy(`${state.ad.primary}\n\nHeadline: ${state.ad.headline}\nDescription: ${state.ad.desc}\nCTA: ${ctaLabel(state.ad.cta)}`);
+$('#copy-post').onclick=()=>copy([state.caption,state.hashtags].filter(Boolean).join('\n\n'));
+
+let toastT;
+function toast(m,err){ const t=$('#toast'); t.textContent=m; t.className='toast'+(err?' err':''); t.hidden=false; clearTimeout(toastT); toastT=setTimeout(()=>t.hidden=true,3600) }
+
+/* ---------- boot ---------- */
+state.brief = {...SAMPLE.brief, ...state.brief}; state.ad = {...SAMPLE.ad, ...state.ad};
+fillBrief(); syncThemeUI(); buildStrip(); setBusy(null);
+document.fonts?.ready?.then(()=>redrawAll());
+$('#get-app').hidden = !IN_VIEWER;
+/* ---------- installable web app (only when served with a manifest) ---------- */
+let installEvt=null;
+if(!IN_VIEWER && 'serviceWorker' in navigator && /^https?:$/.test(location.protocol) && document.querySelector('link[rel="manifest"]')) navigator.serviceWorker.register('sw.js').catch(()=>{});
+window.addEventListener('beforeinstallprompt',e=>{ e.preventDefault(); installEvt=e; $('#install-app').hidden=false });
+$('#install-app').onclick=async()=>{ if(!installEvt) return; installEvt.prompt(); try{ await installEvt.userChoice }catch(e){} installEvt=null; $('#install-app').hidden=true };
+window.addEventListener('appinstalled',()=>{ $('#install-app').hidden=true; toast('ติดตั้งแอปแล้ว เปิดได้จากเมนู Start หรือหน้าจอหลัก') });
+if(!IN_VIEWER) refreshProviderUI();
+else (async()=>{
+  const [s,d]=await Promise.all([claude.use('sample').catch(()=>null), claude.use('downloads').catch(()=>null)]);
+  sample=s; downloads=d; refreshProviderUI();
+})();
+</script>
+</body></html>
